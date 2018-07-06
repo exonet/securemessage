@@ -1,0 +1,35 @@
+{
+    "name": "exonet/securemessage",
+    "description": "Encrypt and decrypt messages in a secure way.",
+    "type": "library",
+    "require-dev": {
+        "mockery/mockery": "^1.0",
+        "phpunit/phpunit": "^7"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Exonet B.V.",
+            "email": "support@exonet.nl"
+        }
+    ],
+    "require": {
+        "php": "~7.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Exonet\\SecureMessage\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Exonet\\SecureMessage\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "phpunit --testdox tests/"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
