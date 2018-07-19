@@ -49,7 +49,6 @@ $decryptedMessage = $encryptedMessage
     ->setEncryptedMeta($encryptedMessage->getEncryptedMeta())
     ->setDatabaseKey($encryptedMessage->getDatabaseKey())
     ->setStorageKey($encryptedMessage->getStorageKey())
-    ->setVerificationCode($encryptedMessage->getVerificationCode())
-;
+    ->setVerificationCode($encryptedMessage->getVerificationCode());
 
 echo sprintf("Message: %s\n", $secureMessageFactory->decrypt($decryptedMessage)->getContent());
