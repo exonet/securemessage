@@ -17,3 +17,6 @@ before_install:
 install:
     - printf "\n" | pecl install libsodium
     - composer install
+
+script:
+    - composer test
