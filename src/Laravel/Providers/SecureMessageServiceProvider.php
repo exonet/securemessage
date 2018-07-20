@@ -14,7 +14,7 @@ class SecureMessageServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__.'/../config/secure_messages.php' => config_path('secure_messages.php')
+            __DIR__.'/../config/secure_messages.php' => config_path('secure_messages.php'),
         ], 'config');
     }
 
