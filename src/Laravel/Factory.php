@@ -54,7 +54,7 @@ class Factory
      * @param Event                $event                The Laravel event dispatcher instance.
      *
      * @throws \Exonet\SecureMessage\Exceptions\InvalidKeyLengthException If the specified meta key isn't
-     *                                                                    exactly 32 characters.
+     *                                                                    exactly 10 characters.
      */
     public function __construct(
         SecureMessageFactory $secureMessageFactory,

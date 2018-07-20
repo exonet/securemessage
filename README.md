@@ -62,7 +62,7 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) and [CODE_OF_CONDUCT](CODE_OF_CONDUCT
 
 ## Security
 
-If you discover any security related issues please email [support@exonet.nl](mailto:support@exonet.nl) instead of using 
+If you discover any security related issues please email [development@exonet.nl](mailto:development@exonet.nl) instead of using 
 the issue tracker.
 
 ## Credits

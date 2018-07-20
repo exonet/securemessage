@@ -4,9 +4,9 @@ By using the provided factory it is pretty easy to create a new secure message:
 
 ```php
 // Create the factory.
-$secureMessageFactory = new Exonet\SecureMessage\Factory();
+$secureMessageFactory = new \Exonet\SecureMessage\Factory();
 // Set the (application wide) meta key.
-$secureMessageFactory->setMetaKey('A_10_random_characters_long_key.');
+$secureMessageFactory->setMetaKey('djuyteb765d');
 
 // Create a new SecureMessage. Note: it is not encrypted yet!
 $secureMessage = $secureMessageFactory->make('Hello, world!');
@@ -18,7 +18,7 @@ $encryptedMessage = $secureMessage->encrypt();
 after storing them, you call `$encryptedMessage->wipeKeysFromMemory()` to securely erase the keys.
 
 The `meta key` is a string of 10 characters that is used when encrypting the meta data in combination with the database
-and storage key. This can be the same key for each secure message (because of the usage of the database and storage
+and storage key. This can be the same key for each secure message (because of the use of the database and storage
 keys the complete key used for encryption is never the same) or per secure message. However, if you're using a meta 
 key per secure message, please note that you must store it somewhere or that you can recreate it, because it is necessary 
 for every decrypt/validation action.
@@ -31,7 +31,7 @@ Assuming you've the correct keys:
 // Create the factory.
 $secureMessageFactory = new Exonet\SecureMessage\Factory();
 // Set the (application wide) meta key.
-$secureMessageFactory->setMetaKey('A_10_random_characters_long_key.');
+$secureMessageFactory->setMetaKey('djuyteb765d');
 
 $secureMessage = new \Exonet\SecureMessage\SecureMessage();
 $secureMessage->setEncryptedContent('[the encrypted content]');
