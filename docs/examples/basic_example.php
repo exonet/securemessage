@@ -22,7 +22,7 @@ $encryptedMessage = $secureMessage->encrypt();
 echo "\n\n";
 
 /*
- * You can give the ID and VerificationCode to your user. The database and storage key are  displayed here for
+ * You can give the ID and VerificationCode to your user. The database and storage key are displayed here for
  * demonstration purposes, but in a real-world application the user doesn't need to know about them.
  */
 echo '---[ ENCRYPTED MESSAGE DATA ]---'."\n";
