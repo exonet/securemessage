@@ -21,7 +21,10 @@ $encryptedMessage = $secureMessage->encrypt();
 
 echo "\n\n";
 
-// This is the information you want to show to your user.
+/*
+ * You can give the ID and VerificationCode to your user. The database and storage key are  displayed here for
+ * demonstration purposes, but in a real-world application the user doesn't need to know about them.
+ */
 echo '---[ ENCRYPTED MESSAGE DATA ]---'."\n";
 echo sprintf("ID: %s\n", $encryptedMessage->getId());
 echo sprintf("Database key: %s\n", base64_encode($encryptedMessage->getDatabaseKey()));
@@ -39,7 +42,7 @@ echo sprintf("Expire date: %s\n", date('Y-m-d H:i', $decryptedMeta['expires_at']
 echo "\n\n";
 
 /*
- * To keep things simple for this example, the encrypted data and keys are directly retrieved from the encrypted message.
+ * To keep things simple for this example, the encrypted data and keys are retrieved directly from the encrypted message.
  * In a real world application, you'll have to read them from the database, file on disk and the user input (verification
  * code).
  */
