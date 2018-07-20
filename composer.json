@@ -31,5 +31,15 @@
     },
     "config": {
         "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Exonet\\SecureMessage\\Laravel\\Providers\\SecureMessageServiceProvider"
+            ],
+            "aliases": {
+                "SecureMessage": "Exonet\\SecureMessage\\Laravel\\SecureMessageFacade"
+            }
+        }
     }
 }
