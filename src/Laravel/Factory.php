@@ -238,7 +238,17 @@ class Factory
         // Build the SecureMessage as required by the Crypto utility, but only with the data for decrypting the meta.
         $secureMessage = new SecureMessage();
         $secureMessage->setId($record->id);
+        $secureMessage->setDatabaseKey($this->laravelEncryption->decrypt($record->key));
         $secureMessage->setEncryptedMeta($this->laravelEncryption->decrypt($record->meta));
+        
+        // Check if the storage key file exists.
+        if (!$this->storage->exists($record->id)) {
+            throw new DecryptException('Can not find key file.');
+        }
+
+        // Read and set the storage key.
+        $secureMessage->setStorageKey($this->laravelEncryption->decrypt($this->storage->get($record->id)));
+
 
         // Decrypt the meta data.
         $meta = $this->secureMessageFactory->decryptMeta($secureMessage);
