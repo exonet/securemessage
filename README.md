@@ -19,8 +19,7 @@ The verification code can be sent (securely) to the receiver of the secure messa
 message and read it.
 
 ## Requirements
-This package requires at least PHP 7.1 with the [libsodium](https://github.com/jedisct1/libsodium-php) extensions or
-PHP 7.2.
+This package requires at least PHP 7.1 with the [libsodium](https://github.com/jedisct1/libsodium-php) extension.
 
 ## Install
 
