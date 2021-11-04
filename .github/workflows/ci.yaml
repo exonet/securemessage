@@ -20,7 +20,20 @@ jobs:
       - name: 📦 Composer install
         uses: php-actions/composer@v6
 
-      - name: 🧰 Run unit tests
+      - name: 🧰 Run unit tests (PHP 7.3)
         uses: php-actions/phpunit@v9
         with:
           configuration: phpunit.xml
+          php_version: 7.3
+
+      - name: 🧰 Run unit tests (PHP 7.4)
+        uses: php-actions/phpunit@v9
+        with:
+          configuration: phpunit.xml
+          php_version: 7.4
+
+      - name: 🧰 Run unit tests (PHP 8.0)
+        uses: php-actions/phpunit@v9
+        with:
+          configuration: phpunit.xml
+          php_version: 8.0
