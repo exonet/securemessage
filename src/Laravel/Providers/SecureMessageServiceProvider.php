@@ -21,7 +21,7 @@ class SecureMessageServiceProvider extends ServiceProvider
     /**
      * {@inheritdoc}
      */
-    public function register() : void
+    public function register(): void
     {
         // Load the migration and the config.
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');

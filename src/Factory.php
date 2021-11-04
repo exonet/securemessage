@@ -7,14 +7,13 @@ use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 class Factory
 {
     /**
-     * @var SecureMessage The SecureMessage class.
-     */
-    public $secureMessage;
-
-    /**
      * @const int The number of seconds the secure message is valid.
      */
     protected const DEFAULT_EXPIRE = 86400;
+    /**
+     * @var SecureMessage The SecureMessage class.
+     */
+    public $secureMessage;
 
     /**
      * @var string The key to decrypt the meta data.
@@ -50,7 +49,7 @@ class Factory
      *
      * @return Factory The new (yet unencrypted) secure message factory.
      */
-    public function make(string $content, int $hitPoints = 3, ?int $expiresAt = null) : self
+    public function make(string $content, int $hitPoints = 3, ?int $expiresAt = null): self
     {
         $factory = $this->createFactoryInstance();
 
@@ -74,7 +73,7 @@ class Factory
      *
      * @return SecureMessage The encrypted secure message, including the encryption keys.
      */
-    public function encrypt(?SecureMessage $secureMessage = null) : SecureMessage
+    public function encrypt(?SecureMessage $secureMessage = null): SecureMessage
     {
         $message = $secureMessage ?? $this->secureMessage;
         $keys = $this->generateKeys();
@@ -96,7 +95,7 @@ class Factory
      *
      * @return SecureMessage The decrypted secure message.
      */
-    public function decrypt(SecureMessage $secureMessage) : SecureMessage
+    public function decrypt(SecureMessage $secureMessage): SecureMessage
     {
         $secureMessage->setMetaKey($this->metaKey);
 
@@ -112,7 +111,7 @@ class Factory
      *
      * @return SecureMessage The decrypted secure message.
      */
-    public function decryptMeta(SecureMessage $secureMessage) : SecureMessage
+    public function decryptMeta(SecureMessage $secureMessage): SecureMessage
     {
         $secureMessage->setMetaKey($this->metaKey);
 
@@ -126,7 +125,7 @@ class Factory
      *
      * @return bool Whether or not the encryption key is valid.
      */
-    public function validateEncryptionKey(SecureMessage $secureMessage) : bool
+    public function validateEncryptionKey(SecureMessage $secureMessage): bool
     {
         $secureMessage->setMetaKey($this->metaKey);
 
@@ -142,7 +141,7 @@ class Factory
      *
      * @return $this The current factory instance.
      */
-    public function setMetaKey(string $key) : self
+    public function setMetaKey(string $key): self
     {
         if (strlen($key) !== 10) {
             throw new InvalidKeyLengthException('The meta key must be 10 characters.');
@@ -160,7 +159,7 @@ class Factory
      *
      * @return $this The current factory instance.
      */
-    public function setCryptoInstance(Crypto $crypto) : self
+    public function setCryptoInstance(Crypto $crypto): self
     {
         $this->crypto = $crypto;
 
@@ -182,7 +181,7 @@ class Factory
      *
      * @return string The ID to use.
      */
-    protected function generateId() : string
+    protected function generateId(): string
     {
         return strtoupper(substr(sha1(random_bytes(24)), 0, 32));
     }
@@ -193,7 +192,7 @@ class Factory
      *
      * @return array The keys to use as encryption key.
      */
-    protected function generateKeys() : array
+    protected function generateKeys(): array
     {
         $verificationCode = substr(sha1(random_bytes(10)), 0, 10);
         $storageKey = random_bytes(11);

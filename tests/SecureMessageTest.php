@@ -5,9 +5,12 @@ namespace Exonet\SecureMessage\tests;
 use Exonet\SecureMessage\SecureMessage;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @internal
+ */
 class SecureMessageTest extends TestCase
 {
-    public function test_WipeKeysFromMemory()
+    public function testWipeKeysFromMemory()
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setDatabaseKey('abc');
@@ -30,7 +33,7 @@ class SecureMessageTest extends TestCase
         $this->assertNull($secureMessage->getVerificationCode());
     }
 
-    public function test_WipeContentFromMemory()
+    public function testWipeContentFromMemory()
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setContent('abc');
@@ -39,7 +42,7 @@ class SecureMessageTest extends TestCase
         $this->assertNull($secureMessage->getContent());
     }
 
-    public function test_WipeEncryptedContentFromMemory()
+    public function testWipeEncryptedContentFromMemory()
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setEncryptedContent('abc');
@@ -48,7 +51,7 @@ class SecureMessageTest extends TestCase
         $this->assertNull($secureMessage->getEncryptedContent());
     }
 
-    public function test_WipeEncryptedMetaFromMemory()
+    public function testWipeEncryptedMetaFromMemory()
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setEncryptedMeta('abc');
@@ -57,7 +60,7 @@ class SecureMessageTest extends TestCase
         $this->assertEmpty($secureMessage->getEncryptionKey());
     }
 
-    public function test_GetEncryptionKey()
+    public function testGetEncryptionKey()
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setDatabaseKey('abc');
@@ -67,7 +70,7 @@ class SecureMessageTest extends TestCase
         $this->assertSame('abcdefghi', $secureMessage->getEncryptionKey());
     }
 
-    public function test_SettersGetters()
+    public function testSettersGetters()
     {
         $secureMessage = new SecureMessage();
         $this->assertSame('storageKey', $secureMessage->setStorageKey('storageKey')->getStorageKey());
@@ -83,7 +86,7 @@ class SecureMessageTest extends TestCase
         $this->assertSame(1, $secureMessage->setExpiresAt(1)->getExpiresAt());
     }
 
-    public function test_IsEncrypted()
+    public function testIsEncrypted()
     {
         $secureMessage = new SecureMessage();
 

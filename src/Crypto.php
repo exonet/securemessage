@@ -20,7 +20,7 @@ class Crypto
      *
      * @return SecureMessage The encrypted version of the SecureMessage instance.
      */
-    public function encrypt(SecureMessage $secureMessage) : SecureMessage
+    public function encrypt(SecureMessage $secureMessage): SecureMessage
     {
         if ($secureMessage->isMetaEncrypted() === false) {
             if (strlen($secureMessage->getMetaKey()) !== 32) {
@@ -66,7 +66,7 @@ class Crypto
      *
      * @return SecureMessage The decrypted SecureMessage.
      */
-    public function decrypt(SecureMessage $secureMessage) : SecureMessage
+    public function decrypt(SecureMessage $secureMessage): SecureMessage
     {
         // If the meta isn't decrypted yet, decrypt it now.
         if ($secureMessage->isMetaEncrypted()) {
@@ -116,7 +116,7 @@ class Crypto
      *
      * @return bool Whether or not the encryption key is valid.
      */
-    public function validateEncryptionKey(SecureMessage $secureMessage) : bool
+    public function validateEncryptionKey(SecureMessage $secureMessage): bool
     {
         if (strlen($secureMessage->getEncryptionKey()) !== 32 || strlen($secureMessage->getMetaKey()) !== 32) {
             return false;
@@ -149,7 +149,7 @@ class Crypto
      *
      * @return SecureMessage The decrypted SecureMessage.
      */
-    public function decryptMeta(SecureMessage $secureMessage) : SecureMessage
+    public function decryptMeta(SecureMessage $secureMessage): SecureMessage
     {
         if (!$secureMessage->isMetaEncrypted() || strlen($secureMessage->getMetaKey()) !== 32) {
             throw new DecryptException('Unable to or failed to decrypt the meta data.', $secureMessage);
@@ -180,7 +180,7 @@ class Crypto
      *
      * @return string The merged string.
      */
-    private function toString(string $nonce, string $encryptedContent) : string
+    private function toString(string $nonce, string $encryptedContent): string
     {
         return base64_encode(json_encode([base64_encode($nonce), base64_encode($encryptedContent)]));
     }
@@ -192,7 +192,7 @@ class Crypto
      *
      * @return string[] The nonce and the encrypted message.
      */
-    private function fromString(string $content) : array
+    private function fromString(string $content): array
     {
         [$nonce, $message] = json_decode(base64_decode($content, true));
 
@@ -209,12 +209,13 @@ class Crypto
      *
      * @return SecureMessage The secure message with the hit points reduces by 1.
      */
-    private function reduceHitPoints(SecureMessage $secureMessage) : SecureMessage
+    private function reduceHitPoints(SecureMessage $secureMessage): SecureMessage
     {
         $secureMessage->setHitPoints($secureMessage->getHitPoints() - 1);
         if ($secureMessage->getHitPoints() <= 0) {
             throw new HitPointLimitReachedException(
-                'The maximum number of hit points has been reached.', $secureMessage
+                'The maximum number of hit points has been reached.',
+                $secureMessage
             );
         }
 

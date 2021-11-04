@@ -10,6 +10,9 @@ use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\TestCase;
 use Mockery;
 
+/**
+ * @internal
+ */
 class HousekeepingTest extends TestCase
 {
     public function createApplication()
@@ -20,7 +23,7 @@ class HousekeepingTest extends TestCase
         return $app;
     }
 
-    public function test_Handle()
+    public function testHandle()
     {
         $modelMock = Mockery::mock(SecureMessageModel::class);
         $factoryMock = Mockery::mock(SecureMessageFactory::class);

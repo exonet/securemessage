@@ -39,7 +39,7 @@ class SecureMessage
      *
      * @param bool $wipeVerificationCode When true, wipe also the verification code.
      */
-    public function wipeKeysFromMemory(bool $wipeVerificationCode = true) : void
+    public function wipeKeysFromMemory(bool $wipeVerificationCode = true): void
     {
         if ($this->keys['database'] !== null) {
             sodium_memzero($this->keys['database']);
@@ -61,7 +61,7 @@ class SecureMessage
     /**
      * Wipe the plain text content from memory.
      */
-    public function wipeContentFromMemory() : void
+    public function wipeContentFromMemory(): void
     {
         if ($this->content !== null) {
             sodium_memzero($this->content);
@@ -71,7 +71,7 @@ class SecureMessage
     /**
      * Wipe the encrypted content from memory.
      */
-    public function wipeEncryptedContentFromMemory() : void
+    public function wipeEncryptedContentFromMemory(): void
     {
         if ($this->contentEncrypted !== null) {
             sodium_memzero($this->contentEncrypted);
@@ -81,7 +81,7 @@ class SecureMessage
     /**
      * Wipe the encrypted meta from memory.
      */
-    public function wipeEncryptedMetaFromMemory() : void
+    public function wipeEncryptedMetaFromMemory(): void
     {
         if ($this->metaEncrypted !== null) {
             sodium_memzero($this->metaEncrypted);
@@ -93,7 +93,7 @@ class SecureMessage
      *
      * @return string The encryption key.
      */
-    public function getEncryptionKey() : string
+    public function getEncryptionKey(): string
     {
         return $this->getDatabaseKey().$this->getStorageKey().$this->getVerificationCode();
     }
@@ -101,9 +101,9 @@ class SecureMessage
     /**
      * Get the meta key.
      *
-     * @return null|string The meta key.
+     * @return string|null The meta key.
      */
-    public function getMetaKey() : ?string
+    public function getMetaKey(): ?string
     {
         if ($this->getDatabaseKey() !== null && $this->getStorageKey() !== null && $this->keys['meta'] !== null) {
             return $this->getDatabaseKey().$this->getStorageKey().$this->keys['meta'];
@@ -119,7 +119,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setMetaKey(string $key) : self
+    public function setMetaKey(string $key): self
     {
         $this->keys['meta'] = $key;
 
@@ -131,7 +131,7 @@ class SecureMessage
      *
      * @return string|null The secure message ID.
      */
-    public function getId() : ?string
+    public function getId(): ?string
     {
         return $this->id;
     }
@@ -143,7 +143,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setId(string $id) : self
+    public function setId(string $id): self
     {
         $this->id = $id;
 
@@ -155,7 +155,7 @@ class SecureMessage
      *
      * @return bool True when the content is encrypted.
      */
-    public function isContentEncrypted() : bool
+    public function isContentEncrypted(): bool
     {
         return $this->contentEncrypted !== null;
     }
@@ -167,7 +167,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setEncryptedContent(string $encrypted) : self
+    public function setEncryptedContent(string $encrypted): self
     {
         $this->contentEncrypted = $encrypted;
 
@@ -179,7 +179,7 @@ class SecureMessage
      *
      * @return string|null The encrypted content data.
      */
-    public function getEncryptedContent() : ?string
+    public function getEncryptedContent(): ?string
     {
         return $this->contentEncrypted;
     }
@@ -189,7 +189,7 @@ class SecureMessage
      *
      * @return bool True when the meta is encrypted.
      */
-    public function isMetaEncrypted() : bool
+    public function isMetaEncrypted(): bool
     {
         return $this->metaEncrypted !== null;
     }
@@ -201,7 +201,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setEncryptedMeta(string $encrypted) : self
+    public function setEncryptedMeta(string $encrypted): self
     {
         $this->metaEncrypted = $encrypted;
 
@@ -213,7 +213,7 @@ class SecureMessage
      *
      * @return string|null The encrypted meta data.
      */
-    public function getEncryptedMeta() : ?string
+    public function getEncryptedMeta(): ?string
     {
         return $this->metaEncrypted;
     }
@@ -223,7 +223,7 @@ class SecureMessage
      *
      * @return string|null The content.
      */
-    public function getContent() : ?string
+    public function getContent(): ?string
     {
         return $this->content;
     }
@@ -236,7 +236,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setContent(string $content) : self
+    public function setContent(string $content): self
     {
         $this->content = $content;
 
@@ -248,7 +248,7 @@ class SecureMessage
      *
      * @return string|null The verification code.
      */
-    public function getVerificationCode() : ?string
+    public function getVerificationCode(): ?string
     {
         return $this->keys['verification'];
     }
@@ -260,7 +260,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setVerificationCode(string $verificationCode) : self
+    public function setVerificationCode(string $verificationCode): self
     {
         $this->keys['verification'] = $verificationCode;
 
@@ -272,7 +272,7 @@ class SecureMessage
      *
      * @return string|null The storage key.
      */
-    public function getStorageKey() : ?string
+    public function getStorageKey(): ?string
     {
         return $this->keys['storage'];
     }
@@ -284,7 +284,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setStorageKey(string $storageKey) : self
+    public function setStorageKey(string $storageKey): self
     {
         $this->keys['storage'] = $storageKey;
 
@@ -296,7 +296,7 @@ class SecureMessage
      *
      * @return string|null The database key.
      */
-    public function getDatabaseKey() : ?string
+    public function getDatabaseKey(): ?string
     {
         return $this->keys['database'];
     }
@@ -308,7 +308,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setDatabaseKey(string $databaseKey) : self
+    public function setDatabaseKey(string $databaseKey): self
     {
         $this->keys['database'] = $databaseKey;
 
@@ -322,7 +322,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setHitPoints(int $hitPoints) : self
+    public function setHitPoints(int $hitPoints): self
     {
         $this->meta['hit_points'] = $hitPoints;
 
@@ -334,7 +334,7 @@ class SecureMessage
      *
      * @return int The maximum number of hit points.
      */
-    public function getHitPoints() : int
+    public function getHitPoints(): int
     {
         return $this->meta['hit_points'];
     }
@@ -346,7 +346,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setExpiresAt(int $expiresAt) : self
+    public function setExpiresAt(int $expiresAt): self
     {
         $this->meta['expires_at'] = $expiresAt;
 
@@ -358,7 +358,7 @@ class SecureMessage
      *
      * @return int The timestamp when this message expires.
      */
-    public function getExpiresAt() : int
+    public function getExpiresAt(): int
     {
         return $this->meta['expires_at'];
     }
@@ -368,7 +368,7 @@ class SecureMessage
      *
      * @return mixed[] The meta data.
      */
-    public function getMeta() : array
+    public function getMeta(): array
     {
         return $this->meta;
     }
@@ -380,7 +380,7 @@ class SecureMessage
      *
      * @return $this The current secure message instance.
      */
-    public function setMeta(array $metaData) : self
+    public function setMeta(array $metaData): self
     {
         $this->meta = $metaData;
 
