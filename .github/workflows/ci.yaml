@@ -14,11 +14,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 💽 Install OS Packages
-        uses: mstksg/get-package@v1
-        with:
-          apt-get: libgmp-dev libsodium-dev
-
       - name: 📥 Checkout repository
         uses: actions/checkout@v2
 
@@ -29,4 +24,3 @@ jobs:
         uses: php-actions/phpunit@v3
         with:
           configuration: phpunit.xml
-          php_extensions: sodium
