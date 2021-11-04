@@ -10,9 +10,12 @@ use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 use Exonet\SecureMessage\SecureMessage;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @internal
+ */
 class CryptoTest extends TestCase
 {
-    public function test_Encrypt()
+    public function testEncrypt()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -22,8 +25,8 @@ class CryptoTest extends TestCase
         $secureMessage->setDatabaseKey('databaseKey');
         $secureMessage->setContent('Unit Test');
         $secureMessage->setHitPoints(3);
-        // This message will expire at Wednesday 23 June 2021 19:11:12 UTC
-        $secureMessage->setExpiresAt(1624475472);
+        // This message will expire at Wednesday 23 June 2121 19:11:12 UTC
+        $secureMessage->setExpiresAt(4823435472);
 
         $encrypted = $crypto->encrypt($secureMessage);
 
@@ -47,10 +50,10 @@ class CryptoTest extends TestCase
         ), true);
 
         $this->assertSame(3, $metaArray['hit_points']);
-        $this->assertSame(1624475472, $metaArray['expires_at']);
+        $this->assertSame(4823435472, $metaArray['expires_at']);
     }
 
-    public function test_Encrypt_InvalidKeyLength()
+    public function testEncryptInvalidKeyLength()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -67,7 +70,7 @@ class CryptoTest extends TestCase
         $crypto->encrypt($secureMessage);
     }
 
-    public function test_Encrypt_InvalidMetaKeyLength()
+    public function testEncryptInvalidMetaKeyLength()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -84,7 +87,7 @@ class CryptoTest extends TestCase
         $crypto->encrypt($secureMessage);
     }
 
-    public function test_Decrypt()
+    public function testDecrypt()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -92,15 +95,15 @@ class CryptoTest extends TestCase
         $secureMessage->setStorageKey('storageKey_');
         $secureMessage->setVerificationCode('1234567890');
         $secureMessage->setDatabaseKey('databaseKey');
-        $secureMessage->setEncryptedContent('WyJpeVFVdXRYMHJTWmJoT0V1Q3ROTFE3SFBqOVIwVngxbSIsInpGbHdBQ0dDdThVeFg1STVEZlA3MFFvY1loYU5KeHpMZ3c9PSJd');
-        // This meta data will expire at Wednesday 23 June 2021 19:11:12 UTC and has 3 hit points.
-        $secureMessage->setEncryptedMeta('WyJ4amNNTEhTUG4yRUJ5M0dzMnlWQ3NCcExYc2hjckl5VSIsIitidjFsWGVXdVhhdklkY2V5UDVuXC9yd2YyMWd1cXloTGdieFwvUjNwXC9zMlo5OW5CZWdXNHRNWmdpVGxZUCtST01pOVZVQ3ppXC9MUTg9Il0=');
+        $secureMessage->setEncryptedContent('WyJtQXQxbXdBN3daeUVEbUtXZlJhQUVsZUlOektCXC84Y1YiLCJxWGs2YUJHNHhrSk5tK2pWUk9pTXVVYVZkcVJhUmtrUzFBPT0iXQ==');
+        // This meta data will expire at Wednesday 23 June 2121 19:11:12 UTC and has 3 hit points.
+        $secureMessage->setEncryptedMeta('WyJoQTZMSVJKbmRFMlwvbnZyT0lYVk56UEpJS01QQW5Fd0siLCJuWkFWYXRCSXA5NU5jelFXcG5KSUYzTmxJeTNOZkVQdWRYVjFDTFgzdkdIS0FOTUFBXC9XS1RzN0NnempWRTRjaGdieFBpMDlZQ2w4PSJd');
 
         $decrypted = $crypto->decrypt($secureMessage);
 
         $this->assertSame('Unit Test', $decrypted->getContent());
         $this->assertSame(3, $decrypted->getHitPoints());
-        $this->assertSame(1624475472, $decrypted->getExpiresAt());
+        $this->assertSame(4823435472, $decrypted->getExpiresAt());
         // Test that the encrypted data is removed.
         $this->assertNull($decrypted->getEncryptedMeta());
         $this->assertNull($decrypted->getEncryptedContent());
@@ -111,7 +114,7 @@ class CryptoTest extends TestCase
         $this->assertNull($decrypted->getDatabaseKey());
     }
 
-    public function test_Decrypt_SecureMessageIsExpired()
+    public function testDecryptSecureMessageIsExpired()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -127,7 +130,7 @@ class CryptoTest extends TestCase
         $crypto->decrypt($secureMessage);
     }
 
-    public function test_Decrypt_HitpointsReached()
+    public function testDecryptHitpointsReached()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -135,9 +138,9 @@ class CryptoTest extends TestCase
         $secureMessage->setStorageKey('storageKey_');
         $secureMessage->setVerificationCode('WrongKey__');
         $secureMessage->setDatabaseKey('databaseKey');
-        $secureMessage->setEncryptedContent('WyJpeVFVdXRYMHJTWmJoT0V1Q3ROTFE3SFBqOVIwVngxbSIsInpGbHdBQ0dDdThVeFg1STVEZlA3MFFvY1loYU5KeHpMZ3c9PSJd');
+        $secureMessage->setEncryptedContent('WyJNZUxkN1dUMWk2N0NBK013VnhGNHhoNTRaSVFZdWtDbyIsIlJRclFPTTdJR1UxVnJMMndGSCsxOURwVDRySDhRcEphOWc9PSJd');
         // This meta data will expire at Wednesday 23 June 2021 19:11:12 UTC and has 1 hit point.
-        $secureMessage->setEncryptedMeta('WyJUSmhHejNBdFFzNm5xNTlBWTJ5NG4wY0pzXC9UYUlnODgiLCJjcklIMHlQcXgxNDFjM3cyajBvTFNJRFpGWkJcL0psdHVPYm5aTmhPV2ZaUjhGblFsd0hZa0dHaFBoaHdxS05IbjRFNVBrbGx1QU5VPSJd');
+        $secureMessage->setEncryptedMeta('WyJcLzg3RXVwTW54Smx0R2ZhT2tEK2ZPVVUzQnRxQmxuc0IiLCJHaGV3ekljOVEweEhTVUxDSDJVRXM5OVV6bEdQSVo4SzMwOVcrZlJHMldhdTFqc2QxMTBtSTVzbVgzSDJLT0JJT0Z4XC9sMGpHdjlNPSJd');
 
         /*
          * Don't use `$this->expectException` here, but catch the exception. This way a test can be performed that the
@@ -164,7 +167,7 @@ class CryptoTest extends TestCase
         $this->assertTrue($exceptionThrown);
     }
 
-    public function test_Decrypt_InvalidVerificationCode()
+    public function testDecryptInvalidVerificationCode()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -172,9 +175,9 @@ class CryptoTest extends TestCase
         $secureMessage->setStorageKey('storageKey_');
         $secureMessage->setVerificationCode('WrongKey__');
         $secureMessage->setDatabaseKey('databaseKey');
-        $secureMessage->setEncryptedContent('WyJpeVFVdXRYMHJTWmJoT0V1Q3ROTFE3SFBqOVIwVngxbSIsInpGbHdBQ0dDdThVeFg1STVEZlA3MFFvY1loYU5KeHpMZ3c9PSJd');
-        // This meta data will expire at Wednesday 23 June 2021 19:11:12 UTC and has 3 hit points.
-        $secureMessage->setEncryptedMeta('WyJ4amNNTEhTUG4yRUJ5M0dzMnlWQ3NCcExYc2hjckl5VSIsIitidjFsWGVXdVhhdklkY2V5UDVuXC9yd2YyMWd1cXloTGdieFwvUjNwXC9zMlo5OW5CZWdXNHRNWmdpVGxZUCtST01pOVZVQ3ppXC9MUTg9Il0=');
+        $secureMessage->setEncryptedContent('WyJtQXQxbXdBN3daeUVEbUtXZlJhQUVsZUlOektCXC84Y1YiLCJxWGs2YUJHNHhrSk5tK2pWUk9pTXVVYVZkcVJhUmtrUzFBPT0iXQ==');
+        // This meta data will expire at Wednesday 23 June 2121 19:11:12 UTC and has 3 hit points.
+        $secureMessage->setEncryptedMeta('WyJoQTZMSVJKbmRFMlwvbnZyT0lYVk56UEpJS01QQW5Fd0siLCJuWkFWYXRCSXA5NU5jelFXcG5KSUYzTmxJeTNOZkVQdWRYVjFDTFgzdkdIS0FOTUFBXC9XS1RzN0NnempWRTRjaGdieFBpMDlZQ2w4PSJd');
 
         /*
          * Don't use `$this->expectException` here, but catch the exception. This way a test can be performed that the
@@ -201,7 +204,7 @@ class CryptoTest extends TestCase
         $this->assertTrue($exceptionThrown);
     }
 
-    public function test_ValidateEncryptionKey_CorrectKey()
+    public function testValidateEncryptionKeyCorrectKey()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -209,14 +212,14 @@ class CryptoTest extends TestCase
         $secureMessage->setStorageKey('storageKey_');
         $secureMessage->setVerificationCode('1234567890');
         $secureMessage->setDatabaseKey('databaseKey');
-        $secureMessage->setEncryptedContent('WyJpeVFVdXRYMHJTWmJoT0V1Q3ROTFE3SFBqOVIwVngxbSIsInpGbHdBQ0dDdThVeFg1STVEZlA3MFFvY1loYU5KeHpMZ3c9PSJd');
-        // This meta data will expire at Wednesday 23 June 2021 19:11:12 UTC and has 3 hit points.
-        $secureMessage->setEncryptedMeta('WyJ4amNNTEhTUG4yRUJ5M0dzMnlWQ3NCcExYc2hjckl5VSIsIitidjFsWGVXdVhhdklkY2V5UDVuXC9yd2YyMWd1cXloTGdieFwvUjNwXC9zMlo5OW5CZWdXNHRNWmdpVGxZUCtST01pOVZVQ3ppXC9MUTg9Il0=');
+        $secureMessage->setEncryptedContent('WyJtQXQxbXdBN3daeUVEbUtXZlJhQUVsZUlOektCXC84Y1YiLCJxWGs2YUJHNHhrSk5tK2pWUk9pTXVVYVZkcVJhUmtrUzFBPT0iXQ==');
+        // This meta data will expire at Wednesday 23 June 2121 19:11:12 UTC and has 3 hit points.
+        $secureMessage->setEncryptedMeta('WyJoQTZMSVJKbmRFMlwvbnZyT0lYVk56UEpJS01QQW5Fd0siLCJuWkFWYXRCSXA5NU5jelFXcG5KSUYzTmxJeTNOZkVQdWRYVjFDTFgzdkdIS0FOTUFBXC9XS1RzN0NnempWRTRjaGdieFBpMDlZQ2w4PSJd');
 
         $this->assertTrue($crypto->validateEncryptionKey($secureMessage));
     }
 
-    public function test_ValidateEncryptionKey_IncorrectKey()
+    public function testValidateEncryptionKeyIncorrectKey()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -225,14 +228,14 @@ class CryptoTest extends TestCase
         // This verification code is wrong.
         $secureMessage->setVerificationCode('1234567899');
         $secureMessage->setDatabaseKey('databaseKey');
-        $secureMessage->setEncryptedContent('WyJpeVFVdXRYMHJTWmJoT0V1Q3ROTFE3SFBqOVIwVngxbSIsInpGbHdBQ0dDdThVeFg1STVEZlA3MFFvY1loYU5KeHpMZ3c9PSJd');
-        // This meta data will expire at Wednesday 23 June 2021 19:11:12 UTC and has 3 hit points.
-        $secureMessage->setEncryptedMeta('WyJ4amNNTEhTUG4yRUJ5M0dzMnlWQ3NCcExYc2hjckl5VSIsIitidjFsWGVXdVhhdklkY2V5UDVuXC9yd2YyMWd1cXloTGdieFwvUjNwXC9zMlo5OW5CZWdXNHRNWmdpVGxZUCtST01pOVZVQ3ppXC9MUTg9Il0=');
+        $secureMessage->setEncryptedContent('WyJtQXQxbXdBN3daeUVEbUtXZlJhQUVsZUlOektCXC84Y1YiLCJxWGs2YUJHNHhrSk5tK2pWUk9pTXVVYVZkcVJhUmtrUzFBPT0iXQ==');
+        // This meta data will expire at Wednesday 23 June 2121 19:11:12 UTC and has 3 hit points.
+        $secureMessage->setEncryptedMeta('WyJoQTZMSVJKbmRFMlwvbnZyT0lYVk56UEpJS01QQW5Fd0siLCJuWkFWYXRCSXA5NU5jelFXcG5KSUYzTmxJeTNOZkVQdWRYVjFDTFgzdkdIS0FOTUFBXC9XS1RzN0NnempWRTRjaGdieFBpMDlZQ2w4PSJd');
 
         $this->assertFalse($crypto->validateEncryptionKey($secureMessage));
     }
 
-    public function test_ValidateEncryptionKey_KeyTooShort()
+    public function testValidateEncryptionKeyKeyTooShort()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -241,14 +244,14 @@ class CryptoTest extends TestCase
         // This verification code is too short.
         $secureMessage->setVerificationCode('12345678');
         $secureMessage->setDatabaseKey('databaseKey');
-        $secureMessage->setEncryptedContent('WyJpeVFVdXRYMHJTWmJoT0V1Q3ROTFE3SFBqOVIwVngxbSIsInpGbHdBQ0dDdThVeFg1STVEZlA3MFFvY1loYU5KeHpMZ3c9PSJd');
-        // This meta data will expire at Wednesday 23 June 2021 19:11:12 UTC and has 3 hit points.
-        $secureMessage->setEncryptedMeta('WyJ4amNNTEhTUG4yRUJ5M0dzMnlWQ3NCcExYc2hjckl5VSIsIitidjFsWGVXdVhhdklkY2V5UDVuXC9yd2YyMWd1cXloTGdieFwvUjNwXC9zMlo5OW5CZWdXNHRNWmdpVGxZUCtST01pOVZVQ3ppXC9MUTg9Il0=');
+        $secureMessage->setEncryptedContent('WyJtQXQxbXdBN3daeUVEbUtXZlJhQUVsZUlOektCXC84Y1YiLCJxWGs2YUJHNHhrSk5tK2pWUk9pTXVVYVZkcVJhUmtrUzFBPT0iXQ==');
+        // This meta data will expire at Wednesday 23 June 2121 19:11:12 UTC and has 3 hit points.
+        $secureMessage->setEncryptedMeta('WyJoQTZMSVJKbmRFMlwvbnZyT0lYVk56UEpJS01QQW5Fd0siLCJuWkFWYXRCSXA5NU5jelFXcG5KSUYzTmxJeTNOZkVQdWRYVjFDTFgzdkdIS0FOTUFBXC9XS1RzN0NnempWRTRjaGdieFBpMDlZQ2w4PSJd');
 
         $this->assertFalse($crypto->validateEncryptionKey($secureMessage));
     }
 
-    public function test_DecryptMeta()
+    public function testDecryptMeta()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -256,21 +259,21 @@ class CryptoTest extends TestCase
         $secureMessage->setStorageKey('storageKey_');
         $secureMessage->setVerificationCode('1234567890');
         $secureMessage->setDatabaseKey('databaseKey');
-        $secureMessage->setEncryptedContent('WyJpeVFVdXRYMHJTWmJoT0V1Q3ROTFE3SFBqOVIwVngxbSIsInpGbHdBQ0dDdThVeFg1STVEZlA3MFFvY1loYU5KeHpMZ3c9PSJd');
-        // This meta data will expire at Wednesday 23 June 2021 19:11:12 UTC and has 3 hit points.
-        $secureMessage->setEncryptedMeta('WyJ4amNNTEhTUG4yRUJ5M0dzMnlWQ3NCcExYc2hjckl5VSIsIitidjFsWGVXdVhhdklkY2V5UDVuXC9yd2YyMWd1cXloTGdieFwvUjNwXC9zMlo5OW5CZWdXNHRNWmdpVGxZUCtST01pOVZVQ3ppXC9MUTg9Il0=');
+        $secureMessage->setEncryptedContent('WyJtQXQxbXdBN3daeUVEbUtXZlJhQUVsZUlOektCXC84Y1YiLCJxWGs2YUJHNHhrSk5tK2pWUk9pTXVVYVZkcVJhUmtrUzFBPT0iXQ==');
+        // This meta data will expire at Wednesday 23 June 2121 19:11:12 UTC and has 3 hit points.
+        $secureMessage->setEncryptedMeta('WyJoQTZMSVJKbmRFMlwvbnZyT0lYVk56UEpJS01QQW5Fd0siLCJuWkFWYXRCSXA5NU5jelFXcG5KSUYzTmxJeTNOZkVQdWRYVjFDTFgzdkdIS0FOTUFBXC9XS1RzN0NnempWRTRjaGdieFBpMDlZQ2w4PSJd');
 
         $decrypted = $crypto->decryptMeta($secureMessage);
 
         $this->assertSame(3, $decrypted->getHitPoints());
-        $this->assertSame(1624475472, $decrypted->getExpiresAt());
+        $this->assertSame(4823435472, $decrypted->getExpiresAt());
         // Test that the encrypted meta is removed, but the content is still encrypted.
         $this->assertNull($decrypted->getEncryptedMeta());
         $this->assertNull($decrypted->getContent());
         $this->assertNotNull($decrypted->getEncryptedContent());
     }
 
-    public function test_DecryptMeta_InvalidMetaKey()
+    public function testDecryptMetaInvalidMetaKey()
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -278,9 +281,9 @@ class CryptoTest extends TestCase
         $secureMessage->setStorageKey('storageKey_');
         $secureMessage->setVerificationCode('1234567890');
         $secureMessage->setDatabaseKey('databaseKey');
-        $secureMessage->setEncryptedContent('WyJpeVFVdXRYMHJTWmJoT0V1Q3ROTFE3SFBqOVIwVngxbSIsInpGbHdBQ0dDdThVeFg1STVEZlA3MFFvY1loYU5KeHpMZ3c9PSJd');
-        // This meta data will expire at Wednesday 23 June 2021 19:11:12 UTC and has 3 hit points.
-        $secureMessage->setEncryptedMeta('WyJ4amNNTEhTUG4yRUJ5M0dzMnlWQ3NCcExYc2hjckl5VSIsIitidjFsWGVXdVhhdklkY2V5UDVuXC9yd2YyMWd1cXloTGdieFwvUjNwXC9zMlo5OW5CZWdXNHRNWmdpVGxZUCtST01pOVZVQ3ppXC9MUTg9Il0=');
+        $secureMessage->setEncryptedContent('WyJtQXQxbXdBN3daeUVEbUtXZlJhQUVsZUlOektCXC84Y1YiLCJxWGs2YUJHNHhrSk5tK2pWUk9pTXVVYVZkcVJhUmtrUzFBPT0iXQ==');
+        // This meta data will expire at Wednesday 23 June 2121 19:11:12 UTC and has 3 hit points.
+        $secureMessage->setEncryptedMeta('WyJoQTZMSVJKbmRFMlwvbnZyT0lYVk56UEpJS01QQW5Fd0siLCJuWkFWYXRCSXA5NU5jelFXcG5KSUYzTmxJeTNOZkVQdWRYVjFDTFgzdkdIS0FOTUFBXC9XS1RzN0NnempWRTRjaGdieFBpMDlZQ2w4PSJd');
 
         $this->expectException(DecryptException::class);
         $this->expectExceptionMessage('Unable to or failed to decrypt the meta data.');

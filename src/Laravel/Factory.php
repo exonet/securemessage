@@ -79,7 +79,7 @@ class Factory
      *
      * @return SecureMessage The secure message.
      */
-    public function encrypt(string $content, ?Carbon $expireDate = null, ?int $hitPoints = null) : SecureMessage
+    public function encrypt(string $content, ?Carbon $expireDate = null, ?int $hitPoints = null): SecureMessage
     {
         // Get a Carbon instance with the expire date, based on the argument or on the config setting.
         $carbonExpire = $expireDate ?? Carbon::now()->addDays($this->config->get('secure_messages.expires_in'));
@@ -122,7 +122,7 @@ class Factory
      *
      * @return string The contents of the secure message.
      */
-    public function decrypt(string $secureMessageId, string $verificationCode) : ?string
+    public function decrypt(string $secureMessageId, string $verificationCode): ?string
     {
         return $this->decryptMessage($secureMessageId, $verificationCode)->getContent();
     }
@@ -140,7 +140,7 @@ class Factory
      *
      * @return SecureMessage The decrypted secure message, with the keys removed.
      */
-    public function decryptMessage(string $secureMessageId, string $verificationCode) : SecureMessage
+    public function decryptMessage(string $secureMessageId, string $verificationCode): SecureMessage
     {
         // Get the secure message from the database.
         $record = SecureMessageModel::where('id', $secureMessageId)->firstOrFail();
@@ -175,12 +175,17 @@ class Factory
             switch (get_class($exception)) {
                 case HitPointLimitReachedException::class:
                     $this->event->dispatch(new HitPointLimitReached($secureMessage));
+
                     break;
+
                 case ExpiredException::class:
                     $this->event->dispatch(new SecureMessageExpired($secureMessage));
+
                     break;
+
                 default:
                     $this->event->dispatch(new DecryptionFailed($secureMessage));
+
                     break;
             }
 
@@ -197,7 +202,7 @@ class Factory
      *
      * @return bool Whether or not the verification code is valid.
      */
-    public function checkVerificationCode(string $secureMessageId, string $verificationCode) : bool
+    public function checkVerificationCode(string $secureMessageId, string $verificationCode): bool
     {
         // Get the secure message from the database.
         $record = SecureMessageModel::where('id', $secureMessageId)->firstOrFail();
@@ -230,7 +235,7 @@ class Factory
      *
      * @return SecureMessage The secure message with only the (decrypted) meta.
      */
-    public function getMeta(string $secureMessageId) : SecureMessage
+    public function getMeta(string $secureMessageId): SecureMessage
     {
         // Get the secure message from the database.
         $record = SecureMessageModel::where('id', $secureMessageId)->firstOrFail();

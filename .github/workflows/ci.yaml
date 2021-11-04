@@ -1,0 +1,26 @@
+---
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v2
+
+      - name: 📦 Composer install
+        uses: php-actions/composer@v5
+
+      - name: 🧰 Run unit tests
+        uses: php-actions/phpunit@v3
+        with:
+          configuration: phpunit.xml

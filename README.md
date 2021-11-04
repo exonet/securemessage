@@ -37,7 +37,7 @@ $secureMessageFactory = new Exonet\SecureMessage\Factory();
 // Set the (application wide) meta key.
 $secureMessageFactory->setMetaKey('A_10_random_characters_long_key.');
 
-// Create a new SecureMessage. Note: it is not encrypted yet!
+// Create a new SecureMessage. Note: it is not encrypted yet! 
 $secureMessage = $secureMessageFactory->make('Hello, world!');
 // Encrypt the Secure Message.
 $encryptedMessage = $secureMessage->encrypt();
@@ -47,7 +47,7 @@ Please see the `/docs` folder for complete documentation and additional examples
 
 ## Change log
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+Please see [releases](link-releases) for more information on what has changed recently.
 
 ## Testing
 
@@ -57,7 +57,7 @@ $ composer test
 
 ## Contributing
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) and [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) for details.
+Please see [CONTRIBUTING](.github/CONTRIBUTING.md) and [CODE_OF_CONDUCT](.github/CODE_OF_CONDUCT.md) for details.
 
 ## Security
 
@@ -82,4 +82,5 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 [link-travis]: https://travis-ci.org/exonet/securemessage
 [link-downloads]: https://packagist.org/packages/exonet/securemessage
 [link-author]: https://github.com/exonet
+[link-releases]: https://github.com/exonet/securemessage/releases
 [link-contributors]: ../../contributors

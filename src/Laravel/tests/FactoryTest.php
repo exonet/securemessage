@@ -21,16 +21,11 @@ use Illuminate\Contracts\Filesystem\Factory as Storage;
 use Illuminate\Foundation\Testing\TestCase;
 use Mockery;
 
+/**
+ * @internal
+ */
 class FactoryTest extends TestCase
 {
-    public function createApplication()
-    {
-        $app = require __DIR__.'/../../../../bootstrap/app.php';
-        $app->make(Kernel::class)->bootstrap();
-
-        return $app;
-    }
-
     protected function setUp()
     {
         parent::setUp();
@@ -43,7 +38,15 @@ class FactoryTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_Encrypt()
+    public function createApplication()
+    {
+        $app = require __DIR__.'/../../../../bootstrap/app.php';
+        $app->make(Kernel::class)->bootstrap();
+
+        return $app;
+    }
+
+    public function testEncrypt()
     {
         Carbon::setTestNow(Carbon::create(2018, 4, 24, 9, 32, 33));
 
@@ -80,7 +83,7 @@ class FactoryTest extends TestCase
         $this->assertDatabaseHas('secure_messages', ['id' => $encryptedMessage->getId()]);
     }
 
-    public function test_DecryptMessage()
+    public function testDecryptMessage()
     {
         SecureMessageModel::insert([
             'id' => 'unitTest',
@@ -128,7 +131,7 @@ class FactoryTest extends TestCase
         $this->assertSame('Decrypted content', $factory->decrypt('unitTest', '1337'));
     }
 
-    public function test_CheckVerificationCode()
+    public function testCheckVerificationCode()
     {
         SecureMessageModel::insert([
             'id' => 'unitTest',
@@ -175,7 +178,7 @@ class FactoryTest extends TestCase
         $this->assertTrue($factory->checkVerificationCode('unitTest', '1337'));
     }
 
-    public function test_DecryptMessage_StorageKeyNotFound()
+    public function testDecryptMessageStorageKeyNotFound()
     {
         SecureMessageModel::insert([
             'id' => 'unitTest',
@@ -217,7 +220,7 @@ class FactoryTest extends TestCase
         $factory->decryptMessage('unitTest', '1337');
     }
 
-    public function test_DecryptMessage_HitpointLimitReached()
+    public function testDecryptMessageHitpointLimitReached()
     {
         SecureMessageModel::insert([
             'id' => 'unitTest',
@@ -260,7 +263,7 @@ class FactoryTest extends TestCase
         $factory->decryptMessage('unitTest', '1337');
     }
 
-    public function test_DecryptMessage_MessageExpired()
+    public function testDecryptMessageMessageExpired()
     {
         SecureMessageModel::insert([
             'id' => 'unitTest',
@@ -303,7 +306,7 @@ class FactoryTest extends TestCase
         $factory->decryptMessage('unitTest', '1337');
     }
 
-    public function test_DecryptMeta()
+    public function testDecryptMeta()
     {
         SecureMessageModel::insert([
             'id' => 'unitTest',
@@ -341,7 +344,7 @@ class FactoryTest extends TestCase
         $this->assertSame($decryptedSecureMessage, $factory->getMeta('unitTest'));
     }
 
-    public function test_Destroy()
+    public function testDestroy()
     {
         SecureMessageModel::insert(['id' => 'unitTest']);
 

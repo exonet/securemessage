@@ -9,7 +9,7 @@ class CreateSecureMessagesTable extends Migration
     /**
      * Run the migrations.
      */
-    public function up() : void
+    public function up(): void
     {
         Schema::create('secure_messages', function (Blueprint $table) {
             $table->char('id', 32)->unique()->index();
@@ -24,7 +24,7 @@ class CreateSecureMessagesTable extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down() : void
+    public function down(): void
     {
         Schema::dropIfExists('secure_messages');
     }
