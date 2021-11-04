@@ -14,11 +14,15 @@ jobs:
     name: Run php-cs-fixer
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v2
         with:
           ref: ${{ github.head_ref }}
-      - name: Run php-cs-fixer
+
+      - name: 🛠 Run php-cs-fixer
         uses: docker://oskarstark/php-cs-fixer-ga
-      - uses: stefanzweifel/git-auto-commit-action@v4
+
+      - name: 🤖 Apply php-cs-fixer changes
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Apply php-cs-fixer changes
