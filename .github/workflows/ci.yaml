@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: 📦 Composer install
-        uses: php-actions/composer@v5
+        uses: php-actions/composer@v6
 
       - name: 🧰 Run unit tests
         uses: php-actions/phpunit@v9
