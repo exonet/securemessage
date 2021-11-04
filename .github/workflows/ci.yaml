@@ -14,11 +14,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: 💽 Install OS Packages
+        uses: mstksg/get-package@v1
+        with:
+          apt-get: libgmp-dev libsodium-dev
 
-      - uses: php-actions/composer@v5
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v2
 
-      - name: PHPUnit Tests
+      - name: 📦 Composer install
+        uses: php-actions/composer@v5
+
+      - name: 🧰 Run unit tests
         uses: php-actions/phpunit@v3
         with:
           configuration: phpunit.xml
