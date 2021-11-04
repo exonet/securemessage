@@ -20,23 +20,17 @@ see how your change affects other areas of the code, etc.
 
 ## Screenshots (if appropriate)
 
-## Types of changes
-
-What types of changes does your code introduce? Put an `x` in all the boxes that apply:
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
-
 ## Checklist:
 
 Go over all the following points, and put an `x` in all the boxes that apply.
 
-Please, please, please, don't send your pull request until all of the boxes are ticked. Once your pull request is created, it will trigger a build on our [continuous integration](http://www.phptherightway.com/#continuous-integration) server to make sure your [tests and code style pass](https://help.github.com/articles/about-required-status-checks/).
+Please, please, please, don't send your pull request until all of the boxes are ticked. Once your pull request is created, it will trigger a build on our [continuous integration](http://www.phptherightway.com/#continuous-integration) server to make sure your [tests pass](https://help.github.com/articles/about-required-status-checks/).
 
-- [ ] I have read the **[CONTRIBUTING](../CONTRIBUTING.md)** document.
+- [ ] I have read the **[CONTRIBUTING](../.github/CONTRIBUTING.md)** document.
 - [ ] My pull request addresses exactly one patch/feature.
+- [ ] My pull request contains a title that can be used as a release note.
+- [ ] I have added the appropriate labels to my pull request (e.g. breaking-change, new-feature, bugfix).
 - [ ] I have created a branch for this patch/feature.
-- [ ] I'm creating this PR to the `develop` branch.
 - [ ] Each individual commit in the pull request is meaningful.
 - [ ] I have added tests to cover my changes.
 - [ ] If my change requires a change to the documentation, I have updated it accordingly.

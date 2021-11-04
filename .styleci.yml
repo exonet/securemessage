@@ -1,9 +1,0 @@
-preset: recommended
-
-enabled:
-  - strict
-  - strict_param
-
-disabled:
-  - align_double_arrow
-  - simplified_null_return
