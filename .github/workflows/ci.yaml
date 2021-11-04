@@ -29,4 +29,4 @@ jobs:
         uses: php-actions/phpunit@v3
         with:
           configuration: phpunit.xml
-          php_extensions: libsodium
+          php_extensions: sodium
