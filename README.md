@@ -82,4 +82,5 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 [link-travis]: https://travis-ci.org/exonet/securemessage
 [link-downloads]: https://packagist.org/packages/exonet/securemessage
 [link-author]: https://github.com/exonet
+[link-releases]: https://github.com/exonet/securemessage/releases
 [link-contributors]: ../../contributors
