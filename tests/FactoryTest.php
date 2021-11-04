@@ -9,9 +9,12 @@ use Exonet\SecureMessage\SecureMessage;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @internal
+ */
 class FactoryTest extends TestCase
 {
-    public function test_Make()
+    public function testMake()
     {
         $factory = new Factory();
 
@@ -34,7 +37,7 @@ class FactoryTest extends TestCase
         $this->assertSame(10, $resultAll->secureMessage->getExpiresAt());
     }
 
-    public function test_Encrypt()
+    public function testEncrypt()
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
@@ -58,7 +61,7 @@ class FactoryTest extends TestCase
         $this->assertSame($secureMessageResult, $factory->encrypt());
     }
 
-    public function test_Decrypt()
+    public function testDecrypt()
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
@@ -78,7 +81,7 @@ class FactoryTest extends TestCase
         $this->assertSame($secureMessageResult, $factory->decrypt($secureMessage));
     }
 
-    public function test_DecryptMeta()
+    public function testDecryptMeta()
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
@@ -98,7 +101,7 @@ class FactoryTest extends TestCase
         $this->assertSame($secureMessageResult, $factory->decryptMeta($secureMessage));
     }
 
-    public function test_ValidateEncryptionKey()
+    public function testValidateEncryptionKey()
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessage = new SecureMessage();
@@ -117,7 +120,7 @@ class FactoryTest extends TestCase
         $this->assertTrue($factory->validateEncryptionKey($secureMessage));
     }
 
-    public function test_SetMetaKey()
+    public function testSetMetaKey()
     {
         $factory = new Factory();
 

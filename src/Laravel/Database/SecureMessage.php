@@ -9,15 +9,14 @@ class SecureMessage extends Model
     /**
      * {@inheritdoc}
      */
-    protected $keyType = 'char';
-
-    /**
-     * {@inheritdoc}
-     */
     public $incrementing = false;
 
     /**
      * {@inheritdoc}
      */
     public $table = 'secure_messages';
+    /**
+     * {@inheritdoc}
+     */
+    protected $keyType = 'char';
 }

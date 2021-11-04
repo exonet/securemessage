@@ -24,7 +24,7 @@ class Housekeeping extends Command
      * @param SecureMessageFactory $secureMessageFactory The Laravel secure message factory.
      * @param SecureMessageModel   $secureMessageModel   The database model.
      */
-    public function handle(SecureMessageFactory $secureMessageFactory, SecureMessageModel $secureMessageModel) : void
+    public function handle(SecureMessageFactory $secureMessageFactory, SecureMessageModel $secureMessageModel): void
     {
         $secureMessageModel
             ->pluck('id')
