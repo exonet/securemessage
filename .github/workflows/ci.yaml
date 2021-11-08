@@ -14,17 +14,27 @@ jobs:
     name: 🪲 Run tests
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        php: ["7.3", "7.4", "8.0"]
+
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v2
+
+      - name: 🛠 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
 
       - name: 📦 Composer install
         uses: php-actions/composer@v6
 
       - name: 🧰 Run unit tests
-        uses: php-actions/phpunit@v9
+        uses: php-actions/phpunit@v3.0.0
         with:
           configuration: phpunit.xml
+          php_version: ${{ matrix.php }}
 
   check-code-style:
     name: 💅🏻 Check code style
