@@ -22,13 +22,10 @@ jobs:
       - name: 📥 Checkout repository
         uses: actions/checkout@v2
 
-      - name: 🛠 Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-
       - name: 📦 Composer install
         uses: php-actions/composer@v6
+        with:
+          php-version: ${{ matrix.php }}
 
       - name: 🧰 Run unit tests
         uses: php-actions/phpunit@v3.0.0
