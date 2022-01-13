@@ -28,7 +28,7 @@ jobs:
           php-version: ${{ matrix.php }}
 
       - name: 🧰 Run unit tests
-        uses: php-actions/phpunit@v3.0.0
+        uses: php-actions/phpunit@v3
         with:
           configuration: phpunit.xml
           php_version: ${{ matrix.php }}
