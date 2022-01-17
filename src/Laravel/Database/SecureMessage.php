@@ -15,6 +15,7 @@ class SecureMessage extends Model
      * {@inheritdoc}
      */
     public $table = 'secure_messages';
+
     /**
      * {@inheritdoc}
      */

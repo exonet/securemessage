@@ -10,6 +10,7 @@ class Factory
      * @const int The number of seconds the secure message is valid.
      */
     protected const DEFAULT_EXPIRE = 86400;
+
     /**
      * @var SecureMessage The SecureMessage class.
      */
