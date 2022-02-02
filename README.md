@@ -2,7 +2,6 @@
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Software License][ico-license]](LICENSE.md)
-[![Build Status][ico-travis]][link-travis]
 [![Total Downloads][ico-downloads]][link-downloads]
 
 This package makes it possible to create (very) secure messages and store them in, for example, your database. A secure 
@@ -75,11 +74,9 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 [ico-version]: https://img.shields.io/packagist/v/exonet/securemessage.svg?style=flat-square
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/exonet/securemessage/master.svg?style=flat-square
 [ico-downloads]: https://img.shields.io/packagist/dt/exonet/securemessage.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/exonet/securemessage
-[link-travis]: https://travis-ci.org/exonet/securemessage
 [link-downloads]: https://packagist.org/packages/exonet/securemessage
 [link-author]: https://github.com/exonet
 [link-releases]: https://github.com/exonet/securemessage/releases
