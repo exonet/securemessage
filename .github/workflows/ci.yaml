@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: 📦 Composer install
         uses: php-actions/composer@v6
@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
 
