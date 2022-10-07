@@ -46,7 +46,7 @@ Please see the `/docs` folder for complete documentation and additional examples
 
 ## Change log
 
-Please see [releases](link-releases) for more information on what has changed recently.
+Please see [releases][link-releases] for more information on what has changed recently.
 
 ## Testing
 
