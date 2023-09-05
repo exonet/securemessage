@@ -36,6 +36,8 @@ jobs:
   check-code-style:
     name: 💅🏻 Check code style
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: 📥 Checkout repository
