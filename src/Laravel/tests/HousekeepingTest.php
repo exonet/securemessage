@@ -8,7 +8,6 @@ use Exonet\SecureMessage\Laravel\Factory as SecureMessageFactory;
 use Exonet\SecureMessage\SecureMessage;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\TestCase;
-use Mockery;
 
 /**
  * @internal
@@ -25,8 +24,8 @@ class HousekeepingTest extends TestCase
 
     public function testHandle()
     {
-        $modelMock = Mockery::mock(SecureMessageModel::class);
-        $factoryMock = Mockery::mock(SecureMessageFactory::class);
+        $modelMock = \Mockery::mock(SecureMessageModel::class);
+        $factoryMock = \Mockery::mock(SecureMessageFactory::class);
 
         $okSecureMessage = (new SecureMessage())->setId('abc')->setExpiresAt(time() + 10)->setHitPoints(3);
         $expiredSecureMessage = (new SecureMessage())->setId('abc')->setExpiresAt(time() - 10)->setHitPoints(3);
@@ -42,7 +41,7 @@ class HousekeepingTest extends TestCase
         $factoryMock->shouldReceive('destroy')->withArgs(['def'])->once();
         $factoryMock->shouldReceive('destroy')->withArgs(['xyz'])->once();
 
-        $command = Mockery::mock(Housekeeping::class.'[getOutput,info]')->makePartial();
+        $command = \Mockery::mock(Housekeeping::class.'[getOutput,info]')->makePartial();
         $command->shouldReceive('getOutput->isVerbose')->times(2)->andReturnTrue();
         $command->shouldReceive('info')->withArgs(['Destroyed secure message [<comment>abc</comment>]'])->never();
         $command->shouldReceive('info')->withArgs(['Destroyed secure message [<comment>def</comment>]'])->once();
