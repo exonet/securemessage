@@ -6,7 +6,6 @@ use Exonet\SecureMessage\Crypto;
 use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 use Exonet\SecureMessage\Factory;
 use Exonet\SecureMessage\SecureMessage;
-use Mockery;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -42,8 +41,8 @@ class FactoryTest extends TestCase
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
 
-        $cryptoMock = Mockery::mock(Crypto::class);
-        $cryptoMock->shouldReceive('encrypt')->withArgs([Mockery::on(function (SecureMessage $secureMessage) {
+        $cryptoMock = \Mockery::mock(Crypto::class);
+        $cryptoMock->shouldReceive('encrypt')->withArgs([\Mockery::on(function (SecureMessage $secureMessage) {
             $this->assertSame('Unit Test', $secureMessage->getContent());
             $this->assertSame(3, $secureMessage->getHitPoints());
             $this->assertSame(1337, $secureMessage->getExpiresAt());
@@ -68,8 +67,8 @@ class FactoryTest extends TestCase
         $secureMessage = new SecureMessage();
         $secureMessage->setContent('Unit Test');
 
-        $cryptoMock = Mockery::mock(Crypto::class);
-        $cryptoMock->shouldReceive('decrypt')->withArgs([Mockery::on(function (SecureMessage $secureMessage) {
+        $cryptoMock = \Mockery::mock(Crypto::class);
+        $cryptoMock->shouldReceive('decrypt')->withArgs([\Mockery::on(function (SecureMessage $secureMessage) {
             $this->assertSame('Unit Test', $secureMessage->getContent());
             $this->assertNull($secureMessage->getMetaKey());
 
@@ -88,8 +87,8 @@ class FactoryTest extends TestCase
         $secureMessage = new SecureMessage();
         $secureMessage->setContent('Unit Test');
 
-        $cryptoMock = Mockery::mock(Crypto::class);
-        $cryptoMock->shouldReceive('decryptMeta')->withArgs([Mockery::on(function (SecureMessage $secureMessage) {
+        $cryptoMock = \Mockery::mock(Crypto::class);
+        $cryptoMock->shouldReceive('decryptMeta')->withArgs([\Mockery::on(function (SecureMessage $secureMessage) {
             $this->assertSame('Unit Test', $secureMessage->getContent());
             $this->assertNull($secureMessage->getMetaKey());
 
@@ -107,8 +106,8 @@ class FactoryTest extends TestCase
         $secureMessage = new SecureMessage();
         $secureMessage->setContent('Unit Test');
 
-        $cryptoMock = Mockery::mock(Crypto::class);
-        $cryptoMock->shouldReceive('validateEncryptionKey')->withArgs([Mockery::on(function (SecureMessage $secureMessage) {
+        $cryptoMock = \Mockery::mock(Crypto::class);
+        $cryptoMock->shouldReceive('validateEncryptionKey')->withArgs([\Mockery::on(function (SecureMessage $secureMessage) {
             $this->assertSame('Unit Test', $secureMessage->getContent());
             $this->assertNull($secureMessage->getMetaKey());
 
