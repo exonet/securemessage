@@ -2,6 +2,4 @@
 
 namespace Exonet\SecureMessage\Exceptions;
 
-class ExpiredException extends DecryptException
-{
-}
+class ExpiredException extends DecryptException {}

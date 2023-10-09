@@ -2,6 +2,4 @@
 
 namespace Exonet\SecureMessage\Exceptions;
 
-class SecureMessageException extends \Exception
-{
-}
+class SecureMessageException extends \Exception {}

@@ -2,6 +2,4 @@
 
 namespace Exonet\SecureMessage\Exceptions;
 
-class InvalidKeyException extends SecureMessageException
-{
-}
+class InvalidKeyException extends SecureMessageException {}
