@@ -2,6 +2,4 @@
 
 namespace Exonet\SecureMessage\Exceptions;
 
-class HitPointLimitReachedException extends DecryptException
-{
-}
+class HitPointLimitReachedException extends DecryptException {}

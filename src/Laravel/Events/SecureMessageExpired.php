@@ -2,6 +2,4 @@
 
 namespace Exonet\SecureMessage\Laravel\Events;
 
-class SecureMessageExpired extends SecureMessageEvent
-{
-}
+class SecureMessageExpired extends SecureMessageEvent {}

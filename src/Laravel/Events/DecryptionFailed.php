@@ -2,6 +2,4 @@
 
 namespace Exonet\SecureMessage\Laravel\Events;
 
-class DecryptionFailed extends SecureMessageEvent
-{
-}
+class DecryptionFailed extends SecureMessageEvent {}
