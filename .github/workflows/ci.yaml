@@ -11,44 +11,50 @@ on:
 
 jobs:
   run-tests:
-    name: 🪲 Run tests
+    name: Run tests
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        php: ["7.3", "7.4", "8.0"]
+        versions: [
+          { php: "7.3", phpunit: "9" },
+          { php: "7.4", phpunit: "9" },
+          { php: "8.0", phpunit: "9" },
+          { php: "8.1", phpunit: "10" },
+        ]
 
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 📦 Composer install
+      - name: Composer install
         uses: php-actions/composer@v6
         with:
-          php-version: ${{ matrix.php }}
+          php_version: ${{ matrix.versions.php }}
 
-      - name: 🧰 Run unit tests
-        uses: php-actions/phpunit@v3
+      - name: Run unit tests
+        uses: php-actions/phpunit@v3.0.0
         with:
           configuration: phpunit.xml
-          php_version: ${{ matrix.php }}
+          version: ${{ matrix.versions.phpunit }}
+          php_version: ${{ matrix.versions.php }}
 
   check-code-style:
-    name: 💅🏻 Check code style
+    name: Check code style
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
 
-      - name: 🛠 Run php-cs-fixer
+      - name: Run php-cs-fixer
         uses: docker://oskarstark/php-cs-fixer-ga
-
-      - name: 🤖 Apply php-cs-fixer changes
+  
+      - name: Apply php-cs-fixer changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Apply php-cs-fixer changes
