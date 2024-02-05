@@ -1,9 +1,11 @@
 <?php
 
+use Exonet\SecureMessage\Factory;
+
 require __DIR__.'/../../vendor/autoload.php';
 
 // Create the factory.
-$secureMessageFactory = new Exonet\SecureMessage\Factory();
+$secureMessageFactory = new Factory();
 // Set the (application wide) meta key. (Don't use this simple key in production!)
 $secureMessageFactory->setMetaKey('0123456789');
 
