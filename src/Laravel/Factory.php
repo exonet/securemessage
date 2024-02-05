@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Exonet\SecureMessage\Exceptions\DecryptException;
 use Exonet\SecureMessage\Exceptions\ExpiredException;
 use Exonet\SecureMessage\Exceptions\HitPointLimitReachedException;
+use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 use Exonet\SecureMessage\Factory as SecureMessageFactory;
 use Exonet\SecureMessage\Laravel\Database\SecureMessage as SecureMessageModel;
 use Exonet\SecureMessage\Laravel\Events\DecryptionFailed;
@@ -53,8 +54,8 @@ class Factory
      * @param Config               $config               The Laravel configuration instance.
      * @param Event                $event                The Laravel event dispatcher instance.
      *
-     * @throws \Exonet\SecureMessage\Exceptions\InvalidKeyLengthException If the specified meta key isn't
-     *                                                                    exactly 10 characters.
+     * @throws InvalidKeyLengthException If the specified meta key isn't
+     *                                   exactly 10 characters.
      */
     public function __construct(
         SecureMessageFactory $secureMessageFactory,
