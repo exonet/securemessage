@@ -43,6 +43,16 @@ $secureMessage = $secureMessageFactory->make('Hello, world!');
 $encryptedMessage = $secureMessage->encrypt();
 ```
 
+Files (documents, images) can also be stored as a secure message. The file contents are encrypted in memory and the
+file name, mime type and size travel along in the encrypted meta data:
+
+```php
+$secureMessage = $secureMessageFactory->makeFile('/path/to/report.pdf');
+$encryptedMessage = $secureMessage->encrypt();
+```
+
+> Mime type detection uses the `fileinfo` extension when it is available.
+
 Please see the `/docs` folder for complete documentation and additional examples.
 
 ## Upgrading from v1

@@ -71,6 +71,29 @@ keys (10 + 11 + 11 = 32 bytes).
 - **Key lengths are load-bearing.** `Factory::setMetaKey()` requires exactly
   10 characters; `Crypto` requires the *combined* keys to be exactly 32 bytes
   (11-byte database key + 11-byte storage key + 10-char verification code).
+
+## File messages (since v2.1)
+
+- A file is a regular `SecureMessage`: the content holds the file bytes, the
+  encrypted meta carries `file_name`, `mime_type` and `file_size`. There is no
+  separate file class; `isFile()` means "meta has a file_name".
+- File names (and mime types) must be valid UTF-8 — the meta is JSON encoded
+  and `json_encode()` returning false would blow up inside the crypto path.
+  The setters validate this; keep it that way.
+- In the Laravel integration, `content === null` on the database record ⇔
+  file message: the encrypted blob lives on the files disk under
+  `files/{id}`. The `files/` prefix is load-bearing — without it a blob would
+  overwrite the storage-key file when both disks point at the same location.
+- The files disk is resolved **lazily** (`Laravel\Factory::filesDisk()`), so
+  installations that never use file messages don't need to configure it.
+  Never resolve it in the constructor or in code paths that plain text
+  messages hit (this includes `destroy()`, which checks the record first).
+- The encrypted content must always be loaded onto the `SecureMessage`
+  *before* `decrypt()` is called, also on failure paths — null content causes
+  `TypeError`s inside `Crypto` and inside the `DecryptException` constructor.
+- The `$meta` array type is `array<string, int|string|null>`; PHPStan level 6
+  accepts this, levels 7+ would need the narrowing the file-meta getters
+  already do. Don't loosen those getters.
 - **Security invariants — preserve them when touching `Crypto`/`SecureMessage`:**
   nonces are randomly generated per encryption and never reused; failed or
   invalid decrypt attempts must keep reducing hit points (this is the

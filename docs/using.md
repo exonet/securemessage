@@ -42,3 +42,38 @@ $secureMessage->setVerificationCode('a1bc2ef4xy');
 
 $decryptedMessage = $secureMessageFactory->decrypt($secureMessage);
 ```
+
+## Files as Secure Messages
+
+A file can be stored as a secure message: the file contents become the (binary safe) message content and the file
+name, mime type and file size travel along in the encrypted meta data.
+
+```php
+$secureMessageFactory = new \Exonet\SecureMessage\Factory();
+$secureMessageFactory->setMetaKey('djuyteb765');
+
+// Create a SecureMessage from a file. Note: it is not encrypted yet!
+$secureMessage = $secureMessageFactory->makeFile('/path/to/report.pdf');
+$encryptedMessage = $secureMessage->encrypt();
+```
+
+Decrypting works exactly the same as for text messages. After decrypting, the file meta data is available:
+
+```php
+$decrypted = $secureMessageFactory->decrypt($secureMessage);
+
+$decrypted->isFile();        // true
+$decrypted->getFileName();   // 'report.pdf'
+$decrypted->getMimeType();   // 'application/pdf'
+$decrypted->getFileSize();   // The size in bytes.
+$decrypted->getContent();    // The raw file contents.
+```
+
+Some things to keep in mind:
+
+- Files are encrypted **in memory**, so this is meant for small files (documents, images). The encoded, encrypted
+  message is roughly 1.8 times the original file size.
+- The file name must be valid UTF-8 (the meta data is JSON encoded). For files with a non-UTF-8 name, pass an
+  explicit name: `$factory->makeFile($path, fileName: 'sanitized-name.bin')`. The same applies to files on
+  temporary paths (such as uploads), where the base name of the path is meaningless.
+- Mime type detection requires the `fileinfo` extension; without it, `application/octet-stream` is stored.
