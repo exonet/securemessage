@@ -78,6 +78,11 @@ record only holds the keys and meta data. The maximum file size is limited by th
 (default 10 MB) because files are encrypted in memory and the stored blob is roughly three times the original file
 size.
 
+> **Note:** the source file itself is left untouched — `encryptFile()` only *reads* it. For uploads this is fine
+> (PHP removes the temporary upload file at the end of the request), but if your application first writes a file to
+> disk and then stores it as a secure message, deleting the unencrypted original afterwards is the responsibility of
+> your application.
+
 ### Decrypting and downloading a file
 
 `decryptMessage` works for file messages exactly as it does for text messages, including hit points, expiry and the

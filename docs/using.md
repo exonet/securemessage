@@ -77,3 +77,6 @@ Some things to keep in mind:
   explicit name: `$factory->makeFile($path, fileName: 'sanitized-name.bin')`. The same applies to files on
   temporary paths (such as uploads), where the base name of the path is meaningless.
 - Mime type detection requires the `fileinfo` extension; without it, `application/octet-stream` is stored.
+- **The source file itself is left untouched.** `makeFile()` only *reads* the file: the original, unencrypted file
+  stays at its path. If the goal is that the contents only exist as a secure message, deleting (or shredding) the
+  source file after encrypting is the responsibility of your application.
