@@ -2,7 +2,7 @@
 
 ### Installation
 - Run `composer require exonet/securemessage`.
-- If you use Laravel 5.5 or newer, the required ServiceProvider is automatically registered. For older Laravel versions you need to register the service provider `\Exonet\SecureMessage\Laravel\Providers\SecureMessageServiceProvider::class` in your `config/app.php`.
+- The required ServiceProvider is automatically registered via package discovery.
 - In your `.env` file add the following key `SECURE_MESSAGE_META_KEY`. Give it an alphanumeric 10 characters long [random](https://www.random.org/strings/?num=1&len=10&digits=on&upperalpha=on&loweralpha=on&unique=on&format=html&rnd=new) value. 
 - In your `config/filesystems.php` file, add a new storage disk with the name `secure_messages`. For example: `'secure_messages' => ['driver' => 'local', 'root' => storage_path('/secure_messages')],`.
 - (optional) If you'd like to change the storage disk name, default hit points or default expire date, run `php artisan vendor:publish --provider="Exonet\\SecureMessage\\Laravel\\Providers\\SecureMessageServiceProvider" --tag=config` to get the config file to edit those settings.

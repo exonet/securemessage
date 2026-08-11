@@ -6,7 +6,7 @@ By using the provided factory it is pretty easy to create a new secure message:
 // Create the factory.
 $secureMessageFactory = new \Exonet\SecureMessage\Factory();
 // Set the (application wide) meta key.
-$secureMessageFactory->setMetaKey('djuyteb765d');
+$secureMessageFactory->setMetaKey('djuyteb765');
 
 // Create a new SecureMessage. Note: it is not encrypted yet!
 $secureMessage = $secureMessageFactory->make('Hello, world!');
@@ -31,7 +31,7 @@ Assuming you've the correct keys:
 // Create the factory.
 $secureMessageFactory = new Exonet\SecureMessage\Factory();
 // Set the (application wide) meta key.
-$secureMessageFactory->setMetaKey('djuyteb765d');
+$secureMessageFactory->setMetaKey('djuyteb765');
 
 $secureMessage = new \Exonet\SecureMessage\SecureMessage();
 $secureMessage->setEncryptedContent('[the encrypted content]');
