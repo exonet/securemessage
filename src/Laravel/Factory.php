@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Exonet\SecureMessage\Exceptions\DecryptException;
 use Exonet\SecureMessage\Exceptions\ExpiredException;
 use Exonet\SecureMessage\Exceptions\HitPointLimitReachedException;
+use Exonet\SecureMessage\Exceptions\InvalidFileException;
 use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 use Exonet\SecureMessage\Factory as SecureMessageFactory;
 use Exonet\SecureMessage\Laravel\Database\SecureMessage as SecureMessageModel;
@@ -20,9 +21,17 @@ use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Contracts\Events\Dispatcher as Event;
 use Illuminate\Contracts\Filesystem\Factory as Storage;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class Factory
 {
+    /**
+     * @var string The path prefix for encrypted file contents on the files disk. Must never be empty:
+     *             when the files disk and the storage-key disk point at the same location, blobs
+     *             stored at the bare message ID would overwrite the storage key files.
+     */
+    private const FILES_PATH_PREFIX = 'files/';
+
     /**
      * @var SecureMessageFactory The Secure Message factory, configured with the meta key.
      */
@@ -32,6 +41,18 @@ class Factory
      * @var Filesystem The Laravel storage disk holding the storage keys.
      */
     private Filesystem $storage;
+
+    /**
+     * @var Storage The Laravel storage factory, kept to lazily resolve the files disk.
+     */
+    private Storage $storageFactory;
+
+    /**
+     * @var Filesystem|null The Laravel storage disk holding encrypted file contents. Resolved lazily
+     *                      (see filesDisk()) so installations that never use file messages do not
+     *                      need to configure the disk.
+     */
+    private ?Filesystem $filesDisk = null;
 
     /**
      * Factory constructor.
@@ -54,6 +75,7 @@ class Factory
     ) {
         $this->secureMessageFactory = $secureMessageFactory->setMetaKey($config->get('secure_messages.meta_key'));
         $this->storage = $storage->disk($config->get('secure_messages.storage_disk_name'));
+        $this->storageFactory = $storage;
     }
 
     /**
@@ -88,6 +110,82 @@ class Factory
         $record->id = $encryptedData->getId();
         $record->meta = $this->laravelEncryption->encrypt($encryptedData->getEncryptedMeta());
         $record->content = $this->laravelEncryption->encrypt($encryptedData->getEncryptedContent());
+        $record->key = $this->laravelEncryption->encrypt($encryptedData->getDatabaseKey());
+        $record->created_at = Carbon::now();
+        $record->updated_at = Carbon::now();
+        $record->save();
+
+        // Wipe the keys from memory, but keep the verification code.
+        $encryptedData->wipeKeysFromMemory(false);
+
+        return $encryptedData;
+    }
+
+    /**
+     * Encrypt the given file and get a SecureMessage with the verification code available (all other
+     * keys are removed from the class). The encrypted file contents are stored on the configured
+     * files disk; the database record is stored with a null content column.
+     *
+     * @param \SplFileInfo|string $file       The file to store secure: a path, or an SplFileInfo
+     *                                        instance (uploaded files work out of the box).
+     * @param Carbon|null         $expireDate The expire date of the secure message. (Optional)
+     * @param int|null            $hitPoints  The number of hit points. (Optional)
+     * @param string|null         $fileName   The file name to store in the (encrypted) meta data.
+     *                                        Defaults to the original client name for uploaded files,
+     *                                        or the base name of the path.
+     *
+     * @throws InvalidFileException If the file is not readable or exceeds the configured maximum size.
+     *
+     * @return SecureMessage The secure message.
+     */
+    public function encryptFile(\SplFileInfo|string $file, ?Carbon $expireDate = null, ?int $hitPoints = null, ?string $fileName = null): SecureMessage
+    {
+        $path = $file instanceof \SplFileInfo ? $file->getPathname() : $file;
+
+        // For uploaded files, default to the name of the file on the client machine. The mime type is
+        // always detected server side from the file contents, because the client mime type is not
+        // trustworthy.
+        if ($fileName === null && $file instanceof UploadedFile) {
+            $fileName = $file->getClientOriginalName();
+        }
+
+        if (!is_file($path) || !is_readable($path)) {
+            throw new InvalidFileException(sprintf('The file [%s] does not exist or is not readable.', $path));
+        }
+
+        // Check the file size before reading the contents into memory.
+        $maxFileSize = $this->config->get('secure_messages.max_file_size');
+        if ($maxFileSize !== null && filesize($path) > $maxFileSize) {
+            throw new InvalidFileException(sprintf('The file exceeds the maximum size of %d bytes.', $maxFileSize));
+        }
+
+        // Get a Carbon instance with the expire date, based on the argument or on the config setting.
+        $carbonExpire = $expireDate ?? Carbon::now()->addDays($this->config->get('secure_messages.expires_in'));
+        $hitPoints = $hitPoints ?? $this->config->get('secure_messages.hit_points');
+
+        // Create the secure message.
+        $encryptedData = $this->secureMessageFactory
+            ->makeFile($path, $hitPoints, $carbonExpire->timestamp, $fileName)
+            ->encrypt();
+
+        // Encrypt the 'storage key' part and save it to the defined storage disk.
+        $this->storage->put(
+            $encryptedData->getId(),
+            $this->laravelEncryption->encrypt($encryptedData->getStorageKey())
+        );
+
+        // Encrypt the file contents a second time and store the blob on the files disk.
+        $this->filesDisk()->put(
+            self::FILES_PATH_PREFIX.$encryptedData->getId(),
+            $this->laravelEncryption->encrypt($encryptedData->getEncryptedContent())
+        );
+
+        // Save the secure message (encrypted) to the database. The content column is null: it marks
+        // the record as a file message, whose encrypted contents live on the files disk.
+        $record = new SecureMessageModel();
+        $record->id = $encryptedData->getId();
+        $record->meta = $this->laravelEncryption->encrypt($encryptedData->getEncryptedMeta());
+        $record->content = null;
         $record->key = $this->laravelEncryption->encrypt($encryptedData->getDatabaseKey());
         $record->created_at = Carbon::now();
         $record->updated_at = Carbon::now();
@@ -138,9 +236,12 @@ class Factory
         $secureMessage->setVerificationCode($verificationCode);
         $secureMessage->setDatabaseKey($this->laravelEncryption->decrypt($record->key));
         $secureMessage->setEncryptedMeta($this->laravelEncryption->decrypt($record->meta));
-        $secureMessage->setEncryptedContent($this->laravelEncryption->decrypt($record->content));
 
         try {
+            // Load the encrypted content, from the files disk or the database record. This must
+            // happen before decrypting, also for the failure paths.
+            $this->loadEncryptedContent($secureMessage, $record);
+
             // Check if the storage key file exists.
             if (!$this->storage->exists($record->id)) {
                 throw new DecryptException('Can not find key file.');
@@ -189,7 +290,7 @@ class Factory
         $secureMessage->setVerificationCode($verificationCode);
         $secureMessage->setDatabaseKey($this->laravelEncryption->decrypt($record->key));
         $secureMessage->setEncryptedMeta($this->laravelEncryption->decrypt($record->meta));
-        $secureMessage->setEncryptedContent($this->laravelEncryption->decrypt($record->content));
+        $this->loadEncryptedContent($secureMessage, $record);
 
         // Check if the storage key file exists.
         if (!$this->storage->exists($record->id)) {
@@ -248,7 +349,52 @@ class Factory
      */
     public function destroy(string $secureMessageId): void
     {
+        // For file messages the encrypted contents live on the files disk; remove that blob as well.
+        // The record is fetched first so the files disk is only resolved for file messages.
+        $record = SecureMessageModel::find($secureMessageId);
+        if ($record !== null && $record->content === null) {
+            $this->filesDisk()->delete(self::FILES_PATH_PREFIX.$secureMessageId);
+        }
+
         SecureMessageModel::destroy($secureMessageId);
         $this->storage->delete($secureMessageId);
+    }
+
+    /**
+     * Set the encrypted content on the secure message: from the database record, or for file
+     * messages (identified by a null content column) from the blob on the files disk.
+     *
+     * @param SecureMessage      $secureMessage The secure message to set the encrypted content on.
+     * @param SecureMessageModel $record        The database record.
+     *
+     * @throws DecryptException If the file blob can not be found.
+     */
+    private function loadEncryptedContent(SecureMessage $secureMessage, SecureMessageModel $record): void
+    {
+        if ($record->content !== null) {
+            $secureMessage->setEncryptedContent($this->laravelEncryption->decrypt($record->content));
+
+            return;
+        }
+
+        // File message: the encrypted contents are stored on the files disk.
+        if (!$this->filesDisk()->exists(self::FILES_PATH_PREFIX.$record->id)) {
+            throw new DecryptException('Can not find file blob.');
+        }
+
+        $secureMessage->setEncryptedContent(
+            $this->laravelEncryption->decrypt($this->filesDisk()->get(self::FILES_PATH_PREFIX.$record->id))
+        );
+    }
+
+    /**
+     * Get the disk holding the encrypted file contents. Resolved lazily (and memoized), so that
+     * installations that never use file messages do not need to configure the disk.
+     *
+     * @return Filesystem The files disk.
+     */
+    private function filesDisk(): Filesystem
+    {
+        return $this->filesDisk ??= $this->storageFactory->disk($this->config->get('secure_messages.files_disk_name'));
     }
 }
