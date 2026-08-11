@@ -1,0 +1,13 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-mockery/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - src
+        - tests
+    excludePaths:
+        # A Laravel config file, not code. Larastan only allows env() calls in an
+        # application config/ directory, which this package directory is not.
+        - src/Laravel/config/secure_messages.php
