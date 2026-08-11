@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Exonet\SecureMessage\Laravel;
 
 use Carbon\Carbon;
@@ -17,39 +19,25 @@ use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Contracts\Events\Dispatcher as Event;
 use Illuminate\Contracts\Filesystem\Factory as Storage;
+use Illuminate\Contracts\Filesystem\Filesystem;
 
 class Factory
 {
     /**
-     * @var SecureMessageFactory The Secure Message factory.
+     * @var SecureMessageFactory The Secure Message factory, configured with the meta key.
      */
-    private $secureMessageFactory;
+    private SecureMessageFactory $secureMessageFactory;
 
     /**
-     * @var Storage The Laravel storage instance.
+     * @var Filesystem The Laravel storage disk holding the storage keys.
      */
-    private $storage;
-
-    /**
-     * @var Encrypter The Laravel Encrypter instance.
-     */
-    private $laravelEncryption;
-
-    /**
-     * @var Config The Laravel configuration instance.
-     */
-    private $config;
-
-    /**
-     * @var Event The Laravel event dispatcher instance.
-     */
-    private $event;
+    private Filesystem $storage;
 
     /**
      * Factory constructor.
      *
      * @param SecureMessageFactory $secureMessageFactory The Secure Message factory.
-     * @param Storage              $storage              The Laravel storage instance.
+     * @param Storage              $storage              The Laravel storage factory instance.
      * @param Encrypter            $laravelEncryption    The Laravel Encrypter instance.
      * @param Config               $config               The Laravel configuration instance.
      * @param Event                $event                The Laravel event dispatcher instance.
@@ -60,15 +48,12 @@ class Factory
     public function __construct(
         SecureMessageFactory $secureMessageFactory,
         Storage $storage,
-        Encrypter $laravelEncryption,
-        Config $config,
-        Event $event
+        private readonly Encrypter $laravelEncryption,
+        private readonly Config $config,
+        private readonly Event $event
     ) {
         $this->secureMessageFactory = $secureMessageFactory->setMetaKey($config->get('secure_messages.meta_key'));
         $this->storage = $storage->disk($config->get('secure_messages.storage_disk_name'));
-        $this->laravelEncryption = $laravelEncryption;
-        $this->config = $config;
-        $this->event = $event;
     }
 
     /**
@@ -77,6 +62,7 @@ class Factory
      *
      * @param string      $content    The content to store secure.
      * @param Carbon|null $expireDate The expire date of the secure message. (Optional)
+     * @param int|null    $hitPoints  The number of hit points. (Optional)
      *
      * @return SecureMessage The secure message.
      */
@@ -119,9 +105,9 @@ class Factory
      * @param string $secureMessageId  The secure message ID.
      * @param string $verificationCode The verification code for the secure message.
      *
-     * @throws DecryptException If the secure message can not be encrypted.
+     * @throws DecryptException If the secure message can not be decrypted.
      *
-     * @return string The contents of the secure message.
+     * @return string|null The contents of the secure message.
      */
     public function decrypt(string $secureMessageId, string $verificationCode): ?string
     {
@@ -137,7 +123,7 @@ class Factory
      * @param string $secureMessageId  The secure message ID.
      * @param string $verificationCode The verification code for the secure message.
      *
-     * @throws DecryptException If the secure message can not be encrypted.
+     * @throws DecryptException If the secure message can not be decrypted.
      *
      * @return SecureMessage The decrypted secure message, with the keys removed.
      */
@@ -173,22 +159,11 @@ class Factory
             }
 
             // Dispatch events.
-            switch (get_class($exception)) {
-                case HitPointLimitReachedException::class:
-                    $this->event->dispatch(new HitPointLimitReached($secureMessage));
-
-                    break;
-
-                case ExpiredException::class:
-                    $this->event->dispatch(new SecureMessageExpired($secureMessage));
-
-                    break;
-
-                default:
-                    $this->event->dispatch(new DecryptionFailed($secureMessage));
-
-                    break;
-            }
+            match ($exception::class) {
+                HitPointLimitReachedException::class => $this->event->dispatch(new HitPointLimitReached($secureMessage)),
+                ExpiredException::class => $this->event->dispatch(new SecureMessageExpired($secureMessage)),
+                default => $this->event->dispatch(new DecryptionFailed($secureMessage)),
+            };
 
             // And throw the exception again, so the user can catch it.
             throw $exception;
@@ -232,7 +207,7 @@ class Factory
      *
      * @param string $secureMessageId The secure message ID.
      *
-     * @throws DecryptException If the secure message can not be encrypted.
+     * @throws DecryptException If the meta data can not be decrypted.
      *
      * @return SecureMessage The secure message with only the (decrypted) meta.
      */
@@ -271,7 +246,7 @@ class Factory
      *
      * @param string $secureMessageId The secure message ID.
      */
-    public function destroy(string $secureMessageId)
+    public function destroy(string $secureMessageId): void
     {
         SecureMessageModel::destroy($secureMessageId);
         $this->storage->delete($secureMessageId);

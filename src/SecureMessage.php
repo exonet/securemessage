@@ -1,38 +1,46 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Exonet\SecureMessage;
 
 class SecureMessage
 {
     /**
-     * @var string The message ID.
+     * @var string|null The message ID.
      */
-    private $id;
+    private ?string $id = null;
 
     /**
-     * @var string[] Array holding the different keys used for this secure message.
+     * @var array<string, string|null> Array holding the different keys used for this secure message.
+     *
+     * Note: these keys are wiped with sodium_memzero(), which nulls its by-reference argument. The
+     * array values must therefore always allow null.
      */
-    private $keys = ['database' => null, 'storage' => null, 'verification' => null, 'meta' => null];
+    private array $keys = ['database' => null, 'storage' => null, 'verification' => null, 'meta' => null];
 
     /**
-     * @var string The message content. Can be plain text or encrypted.
+     * @var string|null The message content. Can be plain text or encrypted. Nullable because it is
+     *                  wiped with sodium_memzero(), which nulls its by-reference argument.
      */
-    private $content;
+    private ?string $content = null;
 
     /**
-     * @var string The encrypted version of the content.
+     * @var string|null The encrypted version of the content. Nullable because it is wiped with
+     *                  sodium_memzero(), which nulls its by-reference argument.
      */
-    private $contentEncrypted;
+    private ?string $contentEncrypted = null;
 
     /**
-     * @var int[] The meta data for this secure message.
+     * @var array<string, int|null> The meta data for this secure message.
      */
-    private $meta = ['hit_points' => null, 'expires_at' => null];
+    private array $meta = ['hit_points' => null, 'expires_at' => null];
 
     /**
-     * @var string[] The encrypted version of the meta.
+     * @var string|null The encrypted version of the meta. Nullable because it is wiped with
+     *                  sodium_memzero(), which nulls its by-reference argument.
      */
-    private $metaEncrypted;
+    private ?string $metaEncrypted = null;
 
     /**
      * Wipe the sensitive keys from memory.
@@ -161,7 +169,7 @@ class SecureMessage
     }
 
     /**
-     * Set the boolean indicating the content is encrypted.
+     * Set the encrypted content.
      *
      * @param string $encrypted The encrypted content.
      *
@@ -195,7 +203,7 @@ class SecureMessage
     }
 
     /**
-     * Set the boolean indicating the meta is encrypted.
+     * Set the encrypted meta data.
      *
      * @param string $encrypted The encrypted meta data.
      *
@@ -229,8 +237,7 @@ class SecureMessage
     }
 
     /**
-     * Set the content. Can be encrypted or unencrypted. Don't forget to also set the 'encrypted' boolean when updating
-     * this value.
+     * Set the content. Can be encrypted or unencrypted.
      *
      * @param string $content The content.
      *
@@ -374,14 +381,23 @@ class SecureMessage
     }
 
     /**
-     * Set all meta data for this message.
+     * Set all meta data for this message. The hit points and expire timestamp are cast to integers
+     * to keep the (strictly typed) meta getters working for callers that provide numeric strings.
      *
-     * @param int[] The meta data.
+     * @param mixed[] $metaData The meta data.
      *
      * @return $this The current secure message instance.
      */
     public function setMeta(array $metaData): self
     {
+        if (isset($metaData['hit_points'])) {
+            $metaData['hit_points'] = (int) $metaData['hit_points'];
+        }
+
+        if (isset($metaData['expires_at'])) {
+            $metaData['expires_at'] = (int) $metaData['expires_at'];
+        }
+
         $this->meta = $metaData;
 
         return $this;

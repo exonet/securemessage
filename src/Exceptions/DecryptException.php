@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Exonet\SecureMessage\Exceptions;
 
 use Exonet\SecureMessage\Crypto;
@@ -8,16 +10,16 @@ use Exonet\SecureMessage\SecureMessage;
 class DecryptException extends SecureMessageException
 {
     /**
-     * @var SecureMessage The secure message.
+     * @var SecureMessage|null The secure message.
      */
-    public $secureMessage;
+    public ?SecureMessage $secureMessage = null;
 
     /**
      * DecryptException constructor.
      *
-     * @param string        $exceptionMessage The exception message.
-     * @param SecureMessage $secureMessage    The SecureMessage instance. Can have updated meta data.
-     * @param Crypto|null   $crypto           The instance of the crypto utility to use.
+     * @param string             $exceptionMessage The exception message.
+     * @param SecureMessage|null $secureMessage    The SecureMessage instance. Can have updated meta data.
+     * @param Crypto|null        $crypto           The instance of the crypto utility to use.
      */
     public function __construct(string $exceptionMessage, ?SecureMessage $secureMessage = null, ?Crypto $crypto = null)
     {

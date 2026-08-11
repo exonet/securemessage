@@ -1,9 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Exonet\SecureMessage;
 
 use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 
+/**
+ * @phpstan-consistent-constructor Subclasses must keep the constructor signature, because
+ *                                 createFactoryInstance() creates new instances with `new static()`.
+ */
 class Factory
 {
     /**
@@ -12,24 +18,24 @@ class Factory
     protected const DEFAULT_EXPIRE = 86400;
 
     /**
-     * @var SecureMessage The SecureMessage class.
+     * @var SecureMessage|null The SecureMessage class.
      */
-    public $secureMessage;
+    public ?SecureMessage $secureMessage = null;
 
     /**
-     * @var string The key to decrypt the meta data.
+     * @var string|null The key to decrypt the meta data.
      */
-    private $metaKey;
+    private ?string $metaKey = null;
 
     /**
      * @var Crypto The crypto utility.
      */
-    private $crypto;
+    private Crypto $crypto;
 
     /**
      * Factory constructor.
      *
-     * @param string      $metaKey The meta key to use.
+     * @param string|null $metaKey The meta key to use.
      * @param Crypto|null $crypto  The instance of the crypto utility to use.
      */
     public function __construct(?string $metaKey = null, ?Crypto $crypto = null)
@@ -44,9 +50,9 @@ class Factory
     /**
      * Make a new secure message factory.
      *
-     * @param string $content   The content to encrypt.
-     * @param int    $hitPoints The number of hit points.
-     * @param int    $expiresAt The expire timestamp.
+     * @param string   $content   The content to encrypt.
+     * @param int      $hitPoints The number of hit points.
+     * @param int|null $expiresAt The expire timestamp.
      *
      * @return Factory The new (yet unencrypted) secure message factory.
      */
@@ -120,7 +126,7 @@ class Factory
     }
 
     /**
-     * Check if the set encryption key can be used to decrypt te message.
+     * Check if the set encryption key can be used to decrypt the message.
      *
      * @param SecureMessage $secureMessage The secure message to decrypt.
      *
@@ -172,7 +178,7 @@ class Factory
      *
      * @return static The new factory instance.
      */
-    protected function createFactoryInstance()
+    protected function createFactoryInstance(): static
     {
         return new static($this->metaKey);
     }
@@ -191,7 +197,7 @@ class Factory
      * Create three keys (with a length of 32 bytes in total) that will be used to encrypt the message. The keys are
      * divided in three parts, so they can be stored at three different locations.
      *
-     * @return array The keys to use as encryption key.
+     * @return string[] The keys to use as encryption key.
      */
     protected function generateKeys(): array
     {

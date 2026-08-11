@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -18,7 +20,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This key is being used to encrypt the meta data of a secure message (the
-    | expire date and hit points). This string MUST be 32 characters long.
+    | expire date and hit points). This string MUST be 10 characters long.
     |
     | PLEASE NOTE: if you change this key while there are non-expired secure
     | messages, those messages CAN NOT be decrypted!

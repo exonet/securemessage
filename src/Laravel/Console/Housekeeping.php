@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Exonet\SecureMessage\Laravel\Console;
 
 use Exonet\SecureMessage\Laravel\Database\SecureMessage as SecureMessageModel;
