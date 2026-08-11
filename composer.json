@@ -3,8 +3,12 @@
     "description": "Encrypt and decrypt messages in a secure way.",
     "type": "library",
     "require-dev": {
-        "mockery/mockery": "^1.4",
-        "phpunit/phpunit": "^9"
+        "larastan/larastan": "^3.0",
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^10.0|^11.0",
+        "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan-mockery": "^2.0",
+        "phpunit/phpunit": "^11.5"
     },
     "license": "MIT",
     "authors": [
@@ -14,7 +18,8 @@
         }
     ],
     "require": {
-        "php": "^7.3|^8.0"
+        "php": "^8.2",
+        "ext-sodium": "*"
     },
     "autoload": {
         "psr-4": {
@@ -23,11 +28,12 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Exonet\\SecureMessage\\": "tests"
+            "Exonet\\SecureMessage\\Tests\\": "tests/"
         }
     },
     "scripts": {
-        "test": "phpunit --testdox tests/"
+        "test": "phpunit --testdox",
+        "analyse": "phpstan analyse --no-progress"
     },
     "config": {
         "sort-packages": true
