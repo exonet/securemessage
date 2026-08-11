@@ -1,6 +1,8 @@
 <?php
 
-namespace Exonet\SecureMessage\Laravel\tests;
+declare(strict_types=1);
+
+namespace Exonet\SecureMessage\Tests\Laravel;
 
 use Carbon\Carbon;
 use Exonet\SecureMessage\Exceptions\DecryptException;
@@ -12,45 +14,38 @@ use Exonet\SecureMessage\Laravel\Events\DecryptionFailed;
 use Exonet\SecureMessage\Laravel\Events\HitPointLimitReached;
 use Exonet\SecureMessage\Laravel\Events\SecureMessageExpired;
 use Exonet\SecureMessage\Laravel\Factory;
+use Exonet\SecureMessage\Laravel\Providers\SecureMessageServiceProvider;
 use Exonet\SecureMessage\SecureMessage;
 use Illuminate\Contracts\Config\Repository as Config;
-use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Contracts\Events\Dispatcher as Event;
 use Illuminate\Contracts\Filesystem\Factory as Storage;
-use Illuminate\Foundation\Testing\TestCase;
+use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Orchestra\Testbench\TestCase;
 
 /**
  * @internal
  */
 class FactoryTest extends TestCase
 {
-    protected function setUp()
-    {
-        parent::setUp();
-        $this->app->make('db')->beginTransaction();
-    }
+    use MockeryPHPUnitIntegration;
+    use RefreshDatabase;
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
-        $this->app->make('db')->rollBack();
+        Carbon::setTestNow();
         parent::tearDown();
     }
 
-    public function createApplication()
-    {
-        $app = require __DIR__.'/../../../../bootstrap/app.php';
-        $app->make(Kernel::class)->bootstrap();
-
-        return $app;
-    }
-
-    public function testEncrypt()
+    public function testEncrypt(): void
     {
         Carbon::setTestNow(Carbon::create(2018, 4, 24, 9, 32, 33));
 
         $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
         $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
         $encrypterMock = \Mockery::mock(Encrypter::class);
         $configMock = \Mockery::mock(Config::class);
         $eventMock = \Mockery::mock(Event::class);
@@ -73,8 +68,8 @@ class FactoryTest extends TestCase
             ->times(4)
             ->andReturn('encryptedKey', 'encryptedMeta', 'encryptedContent', 'encryptedDbKey');
 
-        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturnSelf();
-        $storageMock->shouldReceive('put')->withArgs(['secureMessageKey', 'encryptedKey'])->once();
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('put')->withArgs(['secureMessageKey', 'encryptedKey'])->once();
 
         $factory = new Factory($secureMessageFactoryMock, $storageMock, $encrypterMock, $configMock, $eventMock);
         $encryptedMessage = $factory->encrypt('Unit Test');
@@ -82,17 +77,13 @@ class FactoryTest extends TestCase
         $this->assertDatabaseHas('secure_messages', ['id' => $encryptedMessage->getId()]);
     }
 
-    public function testDecryptMessage()
+    public function testDecryptMessage(): void
     {
-        SecureMessageModel::insert([
-            'id' => 'unitTest',
-            'key' => 'encryptedDatabaseKey',
-            'meta' => 'encryptedMeta',
-            'content' => 'encryptedContent',
-        ]);
+        $this->insertSecureMessageRecord();
 
         $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
         $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
         $encrypterMock = \Mockery::mock(Encrypter::class);
         $configMock = \Mockery::mock(Config::class);
         $eventMock = \Mockery::mock(Event::class);
@@ -108,9 +99,9 @@ class FactoryTest extends TestCase
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->twice()->andReturn('meta');
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedContent'])->twice()->andReturn('content');
 
-        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturnSelf();
-        $storageMock->shouldReceive('exists')->withArgs(['unitTest'])->twice()->andReturnTrue();
-        $storageMock->shouldReceive('get')->withArgs(['unitTest'])->twice()->andReturn('encryptedStorageKey');
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('exists')->withArgs(['unitTest'])->twice()->andReturnTrue();
+        $storageDiskMock->shouldReceive('get')->withArgs(['unitTest'])->twice()->andReturn('encryptedStorageKey');
 
         $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
         $secureMessageFactoryMock->shouldReceive('decrypt')->withArgs([\Mockery::on(function (SecureMessage $secureMessage) {
@@ -130,23 +121,16 @@ class FactoryTest extends TestCase
         $this->assertSame('Decrypted content', $factory->decrypt('unitTest', '1337'));
     }
 
-    public function testCheckVerificationCode()
+    public function testCheckVerificationCode(): void
     {
-        SecureMessageModel::insert([
-            'id' => 'unitTest',
-            'key' => 'encryptedDatabaseKey',
-            'meta' => 'encryptedMeta',
-            'content' => 'encryptedContent',
-        ]);
+        $this->insertSecureMessageRecord();
 
         $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
         $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
         $encrypterMock = \Mockery::mock(Encrypter::class);
         $configMock = \Mockery::mock(Config::class);
         $eventMock = \Mockery::mock(Event::class);
-
-        $decryptedSecureMessage = new SecureMessage();
-        $decryptedSecureMessage->setContent('Decrypted content');
 
         $configMock->shouldReceive('get')->withArgs(['secure_messages.meta_key'])->once()->andReturn('metaKey');
         $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
@@ -156,9 +140,9 @@ class FactoryTest extends TestCase
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedContent'])->once()->andReturn('content');
 
-        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturnSelf();
-        $storageMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnTrue();
-        $storageMock->shouldReceive('get')->withArgs(['unitTest'])->once()->andReturn('encryptedStorageKey');
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnTrue();
+        $storageDiskMock->shouldReceive('get')->withArgs(['unitTest'])->once()->andReturn('encryptedStorageKey');
 
         $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
         $secureMessageFactoryMock->shouldReceive('validateEncryptionKey')->withArgs([\Mockery::on(function (SecureMessage $secureMessage) {
@@ -177,23 +161,16 @@ class FactoryTest extends TestCase
         $this->assertTrue($factory->checkVerificationCode('unitTest', '1337'));
     }
 
-    public function testDecryptMessageStorageKeyNotFound()
+    public function testDecryptMessageStorageKeyNotFound(): void
     {
-        SecureMessageModel::insert([
-            'id' => 'unitTest',
-            'key' => 'encryptedDatabaseKey',
-            'meta' => 'encryptedMeta',
-            'content' => 'encryptedContent',
-        ]);
+        $this->insertSecureMessageRecord();
 
         $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
         $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
         $encrypterMock = \Mockery::mock(Encrypter::class);
         $configMock = \Mockery::mock(Config::class);
         $eventMock = \Mockery::mock(Event::class);
-
-        $decryptedSecureMessage = new SecureMessage();
-        $decryptedSecureMessage->setContent('Decrypted content');
 
         $configMock->shouldReceive('get')->withArgs(['secure_messages.meta_key'])->once()->andReturn('metaKey');
         $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
@@ -203,13 +180,13 @@ class FactoryTest extends TestCase
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedContent'])->once()->andReturn('content');
 
-        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturnSelf();
-        $storageMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnFalse();
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnFalse();
 
         $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
 
         $eventMock->shouldReceive('dispatch')->withArgs([\Mockery::on(function ($event) {
-            return get_class($event) === DecryptionFailed::class;
+            return $event::class === DecryptionFailed::class;
         })])->once();
 
         $this->expectException(DecryptException::class);
@@ -219,23 +196,16 @@ class FactoryTest extends TestCase
         $factory->decryptMessage('unitTest', '1337');
     }
 
-    public function testDecryptMessageHitpointLimitReached()
+    public function testDecryptMessageHitpointLimitReached(): void
     {
-        SecureMessageModel::insert([
-            'id' => 'unitTest',
-            'key' => 'encryptedDatabaseKey',
-            'meta' => 'encryptedMeta',
-            'content' => 'encryptedContent',
-        ]);
+        $this->insertSecureMessageRecord();
 
         $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
         $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
         $encrypterMock = \Mockery::mock(Encrypter::class);
         $configMock = \Mockery::mock(Config::class);
         $eventMock = \Mockery::mock(Event::class);
-
-        $decryptedSecureMessage = new SecureMessage();
-        $decryptedSecureMessage->setContent('Decrypted content');
 
         $configMock->shouldReceive('get')->withArgs(['secure_messages.meta_key'])->once()->andReturn('metaKey');
         $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
@@ -245,15 +215,15 @@ class FactoryTest extends TestCase
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedContent'])->once()->andReturn('content');
 
-        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturnSelf();
-        $storageMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnTrue();
-        $storageMock->shouldReceive('get')->withArgs(['unitTest'])->once()->andReturn('encryptedStorageKey');
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnTrue();
+        $storageDiskMock->shouldReceive('get')->withArgs(['unitTest'])->once()->andReturn('encryptedStorageKey');
 
         $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
         $secureMessageFactoryMock->shouldReceive('decrypt')->withAnyArgs()->once()->andThrow(new HitPointLimitReachedException('The maximum number of hit points is reached.'));
 
         $eventMock->shouldReceive('dispatch')->withArgs([\Mockery::on(function ($event) {
-            return get_class($event) === HitPointLimitReached::class;
+            return $event::class === HitPointLimitReached::class;
         })])->once();
 
         $this->expectException(DecryptException::class);
@@ -262,17 +232,49 @@ class FactoryTest extends TestCase
         $factory->decryptMessage('unitTest', '1337');
     }
 
-    public function testDecryptMessageMessageExpired()
+    public function testDecryptMessageMessageExpired(): void
     {
-        SecureMessageModel::insert([
-            'id' => 'unitTest',
-            'key' => 'encryptedDatabaseKey',
-            'meta' => 'encryptedMeta',
-            'content' => 'encryptedContent',
-        ]);
+        $this->insertSecureMessageRecord();
 
         $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
         $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
+        $encrypterMock = \Mockery::mock(Encrypter::class);
+        $configMock = \Mockery::mock(Config::class);
+        $eventMock = \Mockery::mock(Event::class);
+
+        $configMock->shouldReceive('get')->withArgs(['secure_messages.meta_key'])->once()->andReturn('metaKey');
+        $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
+
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedDatabaseKey'])->once()->andReturn('databaseKey');
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedStorageKey'])->once()->andReturn('storageKey');
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedContent'])->once()->andReturn('content');
+
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnTrue();
+        $storageDiskMock->shouldReceive('get')->withArgs(['unitTest'])->once()->andReturn('encryptedStorageKey');
+
+        $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
+        $secureMessageFactoryMock->shouldReceive('decrypt')->withAnyArgs()->once()->andThrow(new ExpiredException('This secure message is expired.'));
+
+        $eventMock->shouldReceive('dispatch')->withArgs([\Mockery::on(function ($event) {
+            return $event::class === SecureMessageExpired::class;
+        })])->once();
+
+        $this->expectException(DecryptException::class);
+
+        $factory = new Factory($secureMessageFactoryMock, $storageMock, $encrypterMock, $configMock, $eventMock);
+        $factory->decryptMessage('unitTest', '1337');
+    }
+
+    public function testDecryptMeta(): void
+    {
+        $this->insertSecureMessageRecord();
+
+        $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
+        $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
         $encrypterMock = \Mockery::mock(Encrypter::class);
         $configMock = \Mockery::mock(Config::class);
         $eventMock = \Mockery::mock(Event::class);
@@ -284,51 +286,12 @@ class FactoryTest extends TestCase
         $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
 
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedDatabaseKey'])->once()->andReturn('databaseKey');
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
+
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnTrue();
+        $storageDiskMock->shouldReceive('get')->withArgs(['unitTest'])->once()->andReturn('encryptedStorageKey');
         $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedStorageKey'])->once()->andReturn('storageKey');
-        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
-        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedContent'])->once()->andReturn('content');
-
-        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturnSelf();
-        $storageMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnTrue();
-        $storageMock->shouldReceive('get')->withArgs(['unitTest'])->once()->andReturn('encryptedStorageKey');
-
-        $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
-        $secureMessageFactoryMock->shouldReceive('decrypt')->withAnyArgs()->once()->andThrow(new ExpiredException('This secure message is expired.'));
-
-        $eventMock->shouldReceive('dispatch')->withArgs([\Mockery::on(function ($event) {
-            return get_class($event) === SecureMessageExpired::class;
-        })])->once();
-
-        $this->expectException(DecryptException::class);
-
-        $factory = new Factory($secureMessageFactoryMock, $storageMock, $encrypterMock, $configMock, $eventMock);
-        $factory->decryptMessage('unitTest', '1337');
-    }
-
-    public function testDecryptMeta()
-    {
-        SecureMessageModel::insert([
-            'id' => 'unitTest',
-            'key' => 'encryptedDatabaseKey',
-            'meta' => 'encryptedMeta',
-            'content' => 'encryptedContent',
-        ]);
-
-        $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
-        $storageMock = \Mockery::mock(Storage::class);
-        $encrypterMock = \Mockery::mock(Encrypter::class);
-        $configMock = \Mockery::mock(Config::class);
-        $eventMock = \Mockery::mock(Event::class);
-
-        $decryptedSecureMessage = new SecureMessage();
-        $decryptedSecureMessage->setContent('Decrypted content');
-
-        $configMock->shouldReceive('get')->withArgs(['secure_messages.meta_key'])->once()->andReturn('metaKey');
-        $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
-
-        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
-
-        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturnSelf();
 
         $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
         $secureMessageFactoryMock->shouldReceive('decryptMeta')->withArgs([\Mockery::on(function (SecureMessage $secureMessage) {
@@ -343,24 +306,22 @@ class FactoryTest extends TestCase
         $this->assertSame($decryptedSecureMessage, $factory->getMeta('unitTest'));
     }
 
-    public function testDestroy()
+    public function testDestroy(): void
     {
-        SecureMessageModel::insert(['id' => 'unitTest']);
+        $this->insertSecureMessageRecord();
 
         $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
         $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
         $encrypterMock = \Mockery::mock(Encrypter::class);
         $configMock = \Mockery::mock(Config::class);
         $eventMock = \Mockery::mock(Event::class);
 
-        $decryptedSecureMessage = new SecureMessage();
-        $decryptedSecureMessage->setContent('Decrypted content');
-
         $configMock->shouldReceive('get')->withArgs(['secure_messages.meta_key'])->once()->andReturn('metaKey');
         $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
 
-        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturnSelf();
-        $storageMock->shouldReceive('delete')->withArgs(['unitTest'])->once()->andReturnSelf();
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('delete')->withArgs(['unitTest'])->once()->andReturnSelf();
 
         $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
 
@@ -368,5 +329,24 @@ class FactoryTest extends TestCase
         $factory->destroy('unitTest');
 
         $this->assertDatabaseMissing('secure_messages', ['id' => 'unitTest']);
+    }
+
+    protected function getPackageProviders($app): array
+    {
+        return [SecureMessageServiceProvider::class];
+    }
+
+    /**
+     * Insert a secure message record with all non-nullable columns filled.
+     */
+    private function insertSecureMessageRecord(): void
+    {
+        SecureMessageModel::insert([
+            'id' => 'unitTest',
+            'key' => 'encryptedDatabaseKey',
+            'meta' => 'encryptedMeta',
+            'content' => 'encryptedContent',
+            'created_at' => Carbon::now(),
+        ]);
     }
 }
