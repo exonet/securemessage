@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Exonet\SecureMessage;
 
+use Exonet\SecureMessage\Exceptions\InvalidFileException;
 use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 
 /**
@@ -67,6 +68,42 @@ class Factory
         $message->setExpiresAt($expiresAt ?? time() + self::DEFAULT_EXPIRE);
 
         $factory->secureMessage = $message;
+
+        return $factory;
+    }
+
+    /**
+     * Make a new secure message factory for a file. The file contents become the message content and
+     * the file name, mime type and file size are stored in the (encrypted) meta data.
+     *
+     * @param string      $path      The path of the file to encrypt.
+     * @param int         $hitPoints The number of hit points.
+     * @param int|null    $expiresAt The expire timestamp.
+     * @param string|null $fileName  The file name to store in the meta data. Defaults to the base name
+     *                               of the path; pass an explicit name for files on temporary paths
+     *                               (for example uploads).
+     *
+     * @throws InvalidFileException If the file does not exist, can not be read or has a file name that
+     *                              is not valid UTF-8.
+     *
+     * @return Factory The new (yet unencrypted) secure message factory.
+     */
+    public function makeFile(string $path, int $hitPoints = 3, ?int $expiresAt = null, ?string $fileName = null): self
+    {
+        if (!is_file($path) || !is_readable($path)) {
+            throw new InvalidFileException(sprintf('The file [%s] does not exist or is not readable.', $path));
+        }
+
+        $content = file_get_contents($path);
+        if ($content === false) {
+            throw new InvalidFileException(sprintf('The file [%s] could not be read.', $path));
+        }
+
+        $factory = $this->make($content, $hitPoints, $expiresAt);
+        $factory->secureMessage
+            ->setFileName($fileName ?? $this->getBaseName($path))
+            ->setMimeType($this->detectMimeType($path))
+            ->setFileSize(strlen($content));
 
         return $factory;
     }
@@ -210,5 +247,37 @@ class Factory
             'database_key' => $databaseKey,
             'verification_code' => $verificationCode,
         ];
+    }
+
+    /**
+     * Get the base name of a path. basename() is locale sensitive and can truncate multibyte
+     * characters, so the path separators are stripped manually.
+     *
+     * @param string $path The path to get the base name of.
+     *
+     * @return string The base name.
+     */
+    private function getBaseName(string $path): string
+    {
+        return preg_replace('#^.*[/\\\]#', '', $path) ?? $path;
+    }
+
+    /**
+     * Detect the mime type of the given file. Uses ext-fileinfo when available and falls back to
+     * application/octet-stream.
+     *
+     * @param string $path The path of the file.
+     *
+     * @return string The detected mime type.
+     */
+    private function detectMimeType(string $path): string
+    {
+        if (!class_exists(\finfo::class)) {
+            return 'application/octet-stream';
+        }
+
+        $mimeType = (new \finfo(FILEINFO_MIME_TYPE))->file($path);
+
+        return $mimeType === false ? 'application/octet-stream' : $mimeType;
     }
 }
