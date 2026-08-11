@@ -1,11 +1,14 @@
 <?php
 
-namespace Exonet\SecureMessage\tests;
+declare(strict_types=1);
+
+namespace Exonet\SecureMessage\Tests;
 
 use Exonet\SecureMessage\Crypto;
 use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 use Exonet\SecureMessage\Factory;
 use Exonet\SecureMessage\SecureMessage;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,7 +16,9 @@ use PHPUnit\Framework\TestCase;
  */
 class FactoryTest extends TestCase
 {
-    public function testMake()
+    use MockeryPHPUnitIntegration;
+
+    public function testMake(): void
     {
         $factory = new Factory();
 
@@ -36,7 +41,7 @@ class FactoryTest extends TestCase
         $this->assertSame(10, $resultAll->secureMessage->getExpiresAt());
     }
 
-    public function testEncrypt()
+    public function testEncrypt(): void
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
@@ -60,7 +65,7 @@ class FactoryTest extends TestCase
         $this->assertSame($secureMessageResult, $factory->encrypt());
     }
 
-    public function testDecrypt()
+    public function testDecrypt(): void
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
@@ -80,7 +85,7 @@ class FactoryTest extends TestCase
         $this->assertSame($secureMessageResult, $factory->decrypt($secureMessage));
     }
 
-    public function testDecryptMeta()
+    public function testDecryptMeta(): void
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
@@ -100,7 +105,7 @@ class FactoryTest extends TestCase
         $this->assertSame($secureMessageResult, $factory->decryptMeta($secureMessage));
     }
 
-    public function testValidateEncryptionKey()
+    public function testValidateEncryptionKey(): void
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessage = new SecureMessage();
@@ -119,7 +124,7 @@ class FactoryTest extends TestCase
         $this->assertTrue($factory->validateEncryptionKey($secureMessage));
     }
 
-    public function testSetMetaKey()
+    public function testSetMetaKey(): void
     {
         $factory = new Factory();
 

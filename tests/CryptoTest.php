@@ -1,6 +1,8 @@
 <?php
 
-namespace Exonet\SecureMessage\tests;
+declare(strict_types=1);
+
+namespace Exonet\SecureMessage\Tests;
 
 use Exonet\SecureMessage\Crypto;
 use Exonet\SecureMessage\Exceptions\DecryptException;
@@ -15,7 +17,7 @@ use PHPUnit\Framework\TestCase;
  */
 class CryptoTest extends TestCase
 {
-    public function testEncrypt()
+    public function testEncrypt(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -53,7 +55,7 @@ class CryptoTest extends TestCase
         $this->assertSame(4823435472, $metaArray['expires_at']);
     }
 
-    public function testEncryptInvalidKeyLength()
+    public function testEncryptInvalidKeyLength(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -62,7 +64,7 @@ class CryptoTest extends TestCase
         $secureMessage->setVerificationCode('b');
         $secureMessage->setDatabaseKey('c');
         $secureMessage->setContent('Unit Test');
-        $secureMessage->setHitPoints('1337');
+        $secureMessage->setHitPoints(1337);
         $secureMessage->setExpiresAt(10);
 
         $this->expectException(InvalidKeyLengthException::class);
@@ -70,7 +72,7 @@ class CryptoTest extends TestCase
         $crypto->encrypt($secureMessage);
     }
 
-    public function testEncryptInvalidMetaKeyLength()
+    public function testEncryptInvalidMetaKeyLength(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -79,7 +81,7 @@ class CryptoTest extends TestCase
         $secureMessage->setVerificationCode('1234567890');
         $secureMessage->setDatabaseKey('databaseKey');
         $secureMessage->setContent('Unit Test');
-        $secureMessage->setHitPoints('1337');
+        $secureMessage->setHitPoints(1337);
         $secureMessage->setExpiresAt(10);
 
         $this->expectException(InvalidKeyLengthException::class);
@@ -87,7 +89,7 @@ class CryptoTest extends TestCase
         $crypto->encrypt($secureMessage);
     }
 
-    public function testDecrypt()
+    public function testDecrypt(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -114,7 +116,7 @@ class CryptoTest extends TestCase
         $this->assertNull($decrypted->getDatabaseKey());
     }
 
-    public function testDecryptSecureMessageIsExpired()
+    public function testDecryptSecureMessageIsExpired(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -130,7 +132,7 @@ class CryptoTest extends TestCase
         $crypto->decrypt($secureMessage);
     }
 
-    public function testDecryptHitpointsReached()
+    public function testDecryptHitpointsReached(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -167,7 +169,7 @@ class CryptoTest extends TestCase
         $this->assertTrue($exceptionThrown);
     }
 
-    public function testDecryptInvalidVerificationCode()
+    public function testDecryptInvalidVerificationCode(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -204,7 +206,7 @@ class CryptoTest extends TestCase
         $this->assertTrue($exceptionThrown);
     }
 
-    public function testValidateEncryptionKeyCorrectKey()
+    public function testValidateEncryptionKeyCorrectKey(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -219,7 +221,7 @@ class CryptoTest extends TestCase
         $this->assertTrue($crypto->validateEncryptionKey($secureMessage));
     }
 
-    public function testValidateEncryptionKeyIncorrectKey()
+    public function testValidateEncryptionKeyIncorrectKey(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -235,7 +237,7 @@ class CryptoTest extends TestCase
         $this->assertFalse($crypto->validateEncryptionKey($secureMessage));
     }
 
-    public function testValidateEncryptionKeyKeyTooShort()
+    public function testValidateEncryptionKeyKeyTooShort(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -251,7 +253,7 @@ class CryptoTest extends TestCase
         $this->assertFalse($crypto->validateEncryptionKey($secureMessage));
     }
 
-    public function testDecryptMeta()
+    public function testDecryptMeta(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -273,7 +275,7 @@ class CryptoTest extends TestCase
         $this->assertNotNull($decrypted->getEncryptedContent());
     }
 
-    public function testDecryptMetaInvalidMetaKey()
+    public function testDecryptMetaInvalidMetaKey(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
