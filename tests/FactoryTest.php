@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Exonet\SecureMessage\Tests;
 
 use Exonet\SecureMessage\Crypto;
+use Exonet\SecureMessage\Exceptions\InvalidFileException;
 use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 use Exonet\SecureMessage\Factory;
 use Exonet\SecureMessage\SecureMessage;
@@ -122,6 +123,54 @@ class FactoryTest extends TestCase
         $factory->setCryptoInstance($cryptoMock);
 
         $this->assertTrue($factory->validateEncryptionKey($secureMessage));
+    }
+
+    public function testMakeFile(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'securemessage');
+        file_put_contents($path, 'Unit Test file contents');
+
+        try {
+            $factory = new Factory();
+            $result = $factory->makeFile($path, 1, 10);
+
+            $this->assertNotSame($factory, $result);
+            $this->assertSame('Unit Test file contents', $result->secureMessage->getContent());
+            $this->assertTrue($result->secureMessage->isFile());
+            $this->assertSame(basename($path), $result->secureMessage->getFileName());
+            $this->assertSame('text/plain', $result->secureMessage->getMimeType());
+            $this->assertSame(23, $result->secureMessage->getFileSize());
+            $this->assertSame(1, $result->secureMessage->getHitPoints());
+            $this->assertSame(10, $result->secureMessage->getExpiresAt());
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function testMakeFileWithFileNameOverride(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'securemessage');
+        file_put_contents($path, 'Unit Test file contents');
+
+        try {
+            $result = (new Factory())->makeFile($path, fileName: 'report.txt');
+
+            $this->assertSame('report.txt', $result->secureMessage->getFileName());
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function testMakeFileMissingPath(): void
+    {
+        $this->expectException(InvalidFileException::class);
+        (new Factory())->makeFile(sys_get_temp_dir().'/does-not-exist.bin');
+    }
+
+    public function testMakeFileDirectoryPath(): void
+    {
+        $this->expectException(InvalidFileException::class);
+        (new Factory())->makeFile(sys_get_temp_dir());
     }
 
     public function testSetMetaKey(): void

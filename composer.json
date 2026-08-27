@@ -21,6 +21,9 @@
         "php": "^8.2",
         "ext-sodium": "*"
     },
+    "suggest": {
+        "ext-fileinfo": "Required to detect the mime type of file messages (falls back to application/octet-stream)."
+    },
     "autoload": {
         "psr-4": {
             "Exonet\\SecureMessage\\": "src"

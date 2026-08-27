@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Exonet\SecureMessage\Tests;
 
+use Exonet\SecureMessage\Exceptions\InvalidFileException;
 use Exonet\SecureMessage\SecureMessage;
 use PHPUnit\Framework\TestCase;
 
@@ -86,6 +87,49 @@ class SecureMessageTest extends TestCase
         $this->assertSame(['meta'], $secureMessage->setMeta(['meta'])->getMeta());
         $this->assertSame(1, $secureMessage->setHitPoints(1)->getHitPoints());
         $this->assertSame(1, $secureMessage->setExpiresAt(1)->getExpiresAt());
+    }
+
+    public function testFileMetaAccessors(): void
+    {
+        $secureMessage = new SecureMessage();
+
+        $this->assertFalse($secureMessage->isFile());
+        $this->assertNull($secureMessage->getFileName());
+        $this->assertNull($secureMessage->getMimeType());
+        $this->assertNull($secureMessage->getFileSize());
+
+        $secureMessage->setFileName('report.pdf')->setMimeType('application/pdf')->setFileSize(1337);
+
+        $this->assertTrue($secureMessage->isFile());
+        $this->assertSame('report.pdf', $secureMessage->getFileName());
+        $this->assertSame('application/pdf', $secureMessage->getMimeType());
+        $this->assertSame(1337, $secureMessage->getFileSize());
+    }
+
+    public function testSetFileNameRejectsInvalidUtf8(): void
+    {
+        $secureMessage = new SecureMessage();
+
+        $this->expectException(InvalidFileException::class);
+        $secureMessage->setFileName("\xC3\x28invalid.bin");
+    }
+
+    public function testSetMimeTypeRejectsInvalidUtf8(): void
+    {
+        $secureMessage = new SecureMessage();
+
+        $this->expectException(InvalidFileException::class);
+        $secureMessage->setMimeType("application/\xC3\x28");
+    }
+
+    public function testSetMetaCastsFileSize(): void
+    {
+        $secureMessage = new SecureMessage();
+        $secureMessage->setMeta(['hit_points' => '3', 'expires_at' => '10', 'file_size' => '2048', 'file_name' => 'a.txt']);
+
+        $this->assertSame(2048, $secureMessage->getFileSize());
+        $this->assertSame('a.txt', $secureMessage->getFileName());
+        $this->assertSame(3, $secureMessage->getHitPoints());
     }
 
     public function testIsEncrypted(): void
