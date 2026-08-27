@@ -72,7 +72,8 @@ $decrypted->getContent();    // The raw file contents.
 Some things to keep in mind:
 
 - Files are encrypted **in memory**, so this is meant for small files (documents, images). The encoded, encrypted
-  message is roughly 1.8 times the original file size.
+  message is roughly 1.8 times the original file size. An integration may add its own encryption on top of this:
+  the Laravel integration double encrypts, bringing the stored blob to roughly 3 times the original file size.
 - The file name must be valid UTF-8 (the meta data is JSON encoded). For files with a non-UTF-8 name, pass an
   explicit name: `$factory->makeFile($path, fileName: 'sanitized-name.bin')`. The same applies to files on
   temporary paths (such as uploads), where the base name of the path is meaningless.
