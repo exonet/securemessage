@@ -433,6 +433,7 @@ class SecureMessage
      */
     public function setFileName(string $fileName): self
     {
+        // UTF-8 validation via PCRE instead of mb_check_encoding: mbstring is not a package dependency.
         if (preg_match('//u', $fileName) !== 1) {
             throw new InvalidFileException('The file name must be valid UTF-8.');
         }
@@ -466,6 +467,7 @@ class SecureMessage
      */
     public function setMimeType(string $mimeType): self
     {
+        // UTF-8 validation via PCRE instead of mb_check_encoding: mbstring is not a package dependency.
         if (preg_match('//u', $mimeType) !== 1) {
             throw new InvalidFileException('The mime type must be valid UTF-8.');
         }
