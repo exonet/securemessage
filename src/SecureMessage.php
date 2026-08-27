@@ -107,9 +107,11 @@ class SecureMessage
     }
 
     /**
-     * Get the meta key.
+     * Get the composed meta encryption key: database key (11) + storage key (11) + the configured
+     * 10 character meta key = the 32 bytes sodium requires. The configured key alone is never
+     * enough to decrypt the meta data.
      *
-     * @return string|null The meta key.
+     * @return string|null The composed 32 byte meta key.
      */
     public function getMetaKey(): ?string
     {

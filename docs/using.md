@@ -18,7 +18,8 @@ $encryptedMessage = $secureMessage->encrypt();
 after storing them, you call `$encryptedMessage->wipeKeysFromMemory()` to securely erase the keys.
 
 The `meta key` is a string of 10 characters that is used when encrypting the meta data in combination with the database
-and storage key. This can be the same key for each secure message (because of the use of the database and storage
+and storage key: together they form the 32 byte key that the encryption requires (11 + 11 + 10), so the code that
+validates a 32 character meta key operates on that composed key, not on the configured one. This can be the same key for each secure message (because of the use of the database and storage
 keys the complete key used for encryption is never the same) or per secure message. However, if you're using a meta 
 key per secure message, please note that you must store it somewhere or that you can recreate it, because it is necessary 
 for every decrypt/validation action.
