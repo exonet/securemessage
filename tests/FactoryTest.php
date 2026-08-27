@@ -1,11 +1,15 @@
 <?php
 
-namespace Exonet\SecureMessage\tests;
+declare(strict_types=1);
+
+namespace Exonet\SecureMessage\Tests;
 
 use Exonet\SecureMessage\Crypto;
+use Exonet\SecureMessage\Exceptions\InvalidFileException;
 use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
 use Exonet\SecureMessage\Factory;
 use Exonet\SecureMessage\SecureMessage;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,7 +17,9 @@ use PHPUnit\Framework\TestCase;
  */
 class FactoryTest extends TestCase
 {
-    public function testMake()
+    use MockeryPHPUnitIntegration;
+
+    public function testMake(): void
     {
         $factory = new Factory();
 
@@ -36,7 +42,7 @@ class FactoryTest extends TestCase
         $this->assertSame(10, $resultAll->secureMessage->getExpiresAt());
     }
 
-    public function testEncrypt()
+    public function testEncrypt(): void
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
@@ -60,7 +66,7 @@ class FactoryTest extends TestCase
         $this->assertSame($secureMessageResult, $factory->encrypt());
     }
 
-    public function testDecrypt()
+    public function testDecrypt(): void
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
@@ -80,7 +86,7 @@ class FactoryTest extends TestCase
         $this->assertSame($secureMessageResult, $factory->decrypt($secureMessage));
     }
 
-    public function testDecryptMeta()
+    public function testDecryptMeta(): void
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessageResult = new SecureMessage();
@@ -100,7 +106,7 @@ class FactoryTest extends TestCase
         $this->assertSame($secureMessageResult, $factory->decryptMeta($secureMessage));
     }
 
-    public function testValidateEncryptionKey()
+    public function testValidateEncryptionKey(): void
     {
         $factory = (new Factory('metaKey___'))->make('Unit Test', 3, 1337);
         $secureMessage = new SecureMessage();
@@ -119,7 +125,55 @@ class FactoryTest extends TestCase
         $this->assertTrue($factory->validateEncryptionKey($secureMessage));
     }
 
-    public function testSetMetaKey()
+    public function testMakeFile(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'securemessage');
+        file_put_contents($path, 'Unit Test file contents');
+
+        try {
+            $factory = new Factory();
+            $result = $factory->makeFile($path, 1, 10);
+
+            $this->assertNotSame($factory, $result);
+            $this->assertSame('Unit Test file contents', $result->secureMessage->getContent());
+            $this->assertTrue($result->secureMessage->isFile());
+            $this->assertSame(basename($path), $result->secureMessage->getFileName());
+            $this->assertSame('text/plain', $result->secureMessage->getMimeType());
+            $this->assertSame(23, $result->secureMessage->getFileSize());
+            $this->assertSame(1, $result->secureMessage->getHitPoints());
+            $this->assertSame(10, $result->secureMessage->getExpiresAt());
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function testMakeFileWithFileNameOverride(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'securemessage');
+        file_put_contents($path, 'Unit Test file contents');
+
+        try {
+            $result = (new Factory())->makeFile($path, fileName: 'report.txt');
+
+            $this->assertSame('report.txt', $result->secureMessage->getFileName());
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function testMakeFileMissingPath(): void
+    {
+        $this->expectException(InvalidFileException::class);
+        (new Factory())->makeFile(sys_get_temp_dir().'/does-not-exist.bin');
+    }
+
+    public function testMakeFileDirectoryPath(): void
+    {
+        $this->expectException(InvalidFileException::class);
+        (new Factory())->makeFile(sys_get_temp_dir());
+    }
+
+    public function testSetMetaKey(): void
     {
         $factory = new Factory();
 

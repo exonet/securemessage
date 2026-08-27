@@ -18,7 +18,8 @@ The verification code can be sent (securely) to the receiver of the secure messa
 message and read it.
 
 ## Requirements
-This package requires at least PHP 7.3 with the [sodium](https://www.php.net/manual/en/sodium.installation.php) extension enabled.
+This package requires PHP 8.2 or newer with the [sodium](https://www.php.net/manual/en/sodium.installation.php) extension enabled.
+The optional Laravel integration supports Laravel 12 and 13. For PHP 7.3 up to 8.1, use version 1.x of this package.
 
 ## Install
 
@@ -33,8 +34,8 @@ $ composer require exonet/securemessage
 ```php
 // Create the factory.
 $secureMessageFactory = new Exonet\SecureMessage\Factory();
-// Set the (application wide) meta key.
-$secureMessageFactory->setMetaKey('A_10_random_characters_long_key.');
+// Set the (application wide) meta key. This key must be exactly 10 characters long.
+$secureMessageFactory->setMetaKey('djuyteb765');
 
 // Create a new SecureMessage. Note: it is not encrypted yet! 
 $secureMessage = $secureMessageFactory->make('Hello, world!');
@@ -42,7 +43,37 @@ $secureMessage = $secureMessageFactory->make('Hello, world!');
 $encryptedMessage = $secureMessage->encrypt();
 ```
 
+Files (documents, images) can also be stored as a secure message. The file contents are encrypted in memory and the
+file name, mime type and size travel along in the encrypted meta data:
+
+```php
+$secureMessage = $secureMessageFactory->makeFile('/path/to/report.pdf');
+$encryptedMessage = $secureMessage->encrypt();
+```
+
+> Mime type detection uses the `fileinfo` extension when it is available.
+
 Please see the `/docs` folder for complete documentation and additional examples.
+
+## Upgrading from v1
+
+Messages encrypted with v1 can still be decrypted with v2: the encrypted format and the key structure are unchanged.
+Notable changes:
+
+- PHP 8.2 or newer is required and the Laravel integration requires Laravel 12 or 13.
+- The `sodium` extension is now a hard composer requirement (`ext-sodium`). On servers without the extension,
+  `composer install` fails immediately instead of the package failing at the first encrypt.
+- The whole code base is strictly typed (`declare(strict_types=1)`). Make sure you pass the documented types.
+  In particular, check your published `config/secure_messages.php`: `hit_points` and `expires_in` must be real
+  integers. A numeric string (for example from an `env()` call) was silently coerced by v1, but throws a
+  `TypeError` in v2.
+- The Laravel events (`DecryptionFailed`, `HitPointLimitReached`, `SecureMessageExpired`) now expose the secure
+  message through a `public readonly` property `$secureMessage` (previously this property was private and inaccessible
+  to listeners).
+- A malformed encrypted message now throws a `DecryptException` when decrypting or validating a key, instead of
+  failing with a PHP error. Code catching `TypeError` for this case should catch `DecryptException` instead.
+- The migration class `CreateSecureMessagesTable` is now an anonymous class. The migration filename is unchanged,
+  so existing installations are unaffected, but code referencing the class by name no longer works.
 
 ## Change log
 

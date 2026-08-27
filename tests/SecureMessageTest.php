@@ -1,7 +1,10 @@
 <?php
 
-namespace Exonet\SecureMessage\tests;
+declare(strict_types=1);
 
+namespace Exonet\SecureMessage\Tests;
+
+use Exonet\SecureMessage\Exceptions\InvalidFileException;
 use Exonet\SecureMessage\SecureMessage;
 use PHPUnit\Framework\TestCase;
 
@@ -10,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  */
 class SecureMessageTest extends TestCase
 {
-    public function testWipeKeysFromMemory()
+    public function testWipeKeysFromMemory(): void
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setDatabaseKey('abc');
@@ -33,7 +36,7 @@ class SecureMessageTest extends TestCase
         $this->assertNull($secureMessage->getVerificationCode());
     }
 
-    public function testWipeContentFromMemory()
+    public function testWipeContentFromMemory(): void
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setContent('abc');
@@ -42,7 +45,7 @@ class SecureMessageTest extends TestCase
         $this->assertNull($secureMessage->getContent());
     }
 
-    public function testWipeEncryptedContentFromMemory()
+    public function testWipeEncryptedContentFromMemory(): void
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setEncryptedContent('abc');
@@ -51,7 +54,7 @@ class SecureMessageTest extends TestCase
         $this->assertNull($secureMessage->getEncryptedContent());
     }
 
-    public function testWipeEncryptedMetaFromMemory()
+    public function testWipeEncryptedMetaFromMemory(): void
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setEncryptedMeta('abc');
@@ -60,7 +63,7 @@ class SecureMessageTest extends TestCase
         $this->assertEmpty($secureMessage->getEncryptionKey());
     }
 
-    public function testGetEncryptionKey()
+    public function testGetEncryptionKey(): void
     {
         $secureMessage = new SecureMessage();
         $secureMessage->setDatabaseKey('abc');
@@ -70,7 +73,7 @@ class SecureMessageTest extends TestCase
         $this->assertSame('abcdefghi', $secureMessage->getEncryptionKey());
     }
 
-    public function testSettersGetters()
+    public function testSettersGetters(): void
     {
         $secureMessage = new SecureMessage();
         $this->assertSame('storageKey', $secureMessage->setStorageKey('storageKey')->getStorageKey());
@@ -86,7 +89,50 @@ class SecureMessageTest extends TestCase
         $this->assertSame(1, $secureMessage->setExpiresAt(1)->getExpiresAt());
     }
 
-    public function testIsEncrypted()
+    public function testFileMetaAccessors(): void
+    {
+        $secureMessage = new SecureMessage();
+
+        $this->assertFalse($secureMessage->isFile());
+        $this->assertNull($secureMessage->getFileName());
+        $this->assertNull($secureMessage->getMimeType());
+        $this->assertNull($secureMessage->getFileSize());
+
+        $secureMessage->setFileName('report.pdf')->setMimeType('application/pdf')->setFileSize(1337);
+
+        $this->assertTrue($secureMessage->isFile());
+        $this->assertSame('report.pdf', $secureMessage->getFileName());
+        $this->assertSame('application/pdf', $secureMessage->getMimeType());
+        $this->assertSame(1337, $secureMessage->getFileSize());
+    }
+
+    public function testSetFileNameRejectsInvalidUtf8(): void
+    {
+        $secureMessage = new SecureMessage();
+
+        $this->expectException(InvalidFileException::class);
+        $secureMessage->setFileName("\xC3\x28invalid.bin");
+    }
+
+    public function testSetMimeTypeRejectsInvalidUtf8(): void
+    {
+        $secureMessage = new SecureMessage();
+
+        $this->expectException(InvalidFileException::class);
+        $secureMessage->setMimeType("application/\xC3\x28");
+    }
+
+    public function testSetMetaCastsFileSize(): void
+    {
+        $secureMessage = new SecureMessage();
+        $secureMessage->setMeta(['hit_points' => '3', 'expires_at' => '10', 'file_size' => '2048', 'file_name' => 'a.txt']);
+
+        $this->assertSame(2048, $secureMessage->getFileSize());
+        $this->assertSame('a.txt', $secureMessage->getFileName());
+        $this->assertSame(3, $secureMessage->getHitPoints());
+    }
+
+    public function testIsEncrypted(): void
     {
         $secureMessage = new SecureMessage();
 

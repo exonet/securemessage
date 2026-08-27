@@ -2,7 +2,7 @@
 
 ### Installation
 - Run `composer require exonet/securemessage`.
-- If you use Laravel 5.5 or newer, the required ServiceProvider is automatically registered. For older Laravel versions you need to register the service provider `\Exonet\SecureMessage\Laravel\Providers\SecureMessageServiceProvider::class` in your `config/app.php`.
+- The required ServiceProvider is automatically registered via package discovery.
 - In your `.env` file add the following key `SECURE_MESSAGE_META_KEY`. Give it an alphanumeric 10 characters long [random](https://www.random.org/strings/?num=1&len=10&digits=on&upperalpha=on&loweralpha=on&unique=on&format=html&rnd=new) value. 
 - In your `config/filesystems.php` file, add a new storage disk with the name `secure_messages`. For example: `'secure_messages' => ['driver' => 'local', 'root' => storage_path('/secure_messages')],`.
 - (optional) If you'd like to change the storage disk name, default hit points or default expire date, run `php artisan vendor:publish --provider="Exonet\\SecureMessage\\Laravel\\Providers\\SecureMessageServiceProvider" --tag=config` to get the config file to edit those settings.
@@ -51,3 +51,52 @@ following command to clean up the database and file storage:
 ```bash
 php artisan secure_message:housekeeping
 ```
+
+## Files as secure messages
+
+### Setup
+- In your `config/filesystems.php`, add a storage disk with the name `secure_messages_files`. Use a disk that is
+  separate from the `secure_messages` (storage key) disk — and ideally separate from the database host — so that no
+  single compromised store holds multiple parts of the encryption key material. With the default local driver:
+  `'secure_messages_files' => ['driver' => 'local', 'root' => storage_path('/secure_messages_files')],`
+- Upgrading from a version before 2.1? Run `php artisan migrate` — the package ships a migration that makes the
+  `content` column nullable. Installations that only use text messages don't need to configure the files disk: it is
+  resolved lazily, only when file messages are used.
+
+### Encrypting a file
+
+```php
+// From a path:
+$encryptedMessage = \SecureMessage::encryptFile('/path/to/report.pdf');
+
+// Or directly from an upload; the original client file name is stored automatically:
+$encryptedMessage = \SecureMessage::encryptFile($request->file('attachment'));
+```
+
+The encrypted file contents are stored (double encrypted, like everything else) on the files disk; the database
+record only holds the keys and meta data. The maximum file size is limited by the `max_file_size` config setting
+(default 10 MB) because files are encrypted in memory and the stored blob is roughly three times the original file
+size.
+
+> **Note:** the source file itself is left untouched — `encryptFile()` only *reads* it. For uploads this is fine
+> (PHP removes the temporary upload file at the end of the request), but if your application first writes a file to
+> disk and then stores it as a secure message, deleting the unencrypted original afterwards is the responsibility of
+> your application.
+
+### Decrypting and downloading a file
+
+`decryptMessage` works for file messages exactly as it does for text messages, including hit points, expiry and the
+events. To offer the file as a download:
+
+```php
+$message = \SecureMessage::decryptMessage('SECUREMESSAGEID', 'verificationCode');
+
+return response($message->getContent(), 200, [
+    'Content-Type' => $message->getMimeType() ?? 'application/octet-stream',
+    'Content-Disposition' => 'attachment; filename="'.addslashes($message->getFileName()).'"',
+]);
+```
+
+> **Note:** the file meta data (including the file name!) is part of the meta and can be read server side via
+> `SecureMessage::getMeta()` *without* the verification code. Don't show the file name to visitors before they have
+> entered a valid verification code, unless that is intended.

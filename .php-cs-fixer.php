@@ -8,7 +8,9 @@ $finder = PhpCsFixer\Finder::create()
 $config = new PhpCsFixer\Config();
 
 return $config
+    ->setRiskyAllowed(true)
     ->setRules([
+        'declare_strict_types' => true,
         '@PSR2' => true,
         '@Symfony' => true,
         '@PhpCsFixer' => true,

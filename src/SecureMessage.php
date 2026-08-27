@@ -1,38 +1,50 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Exonet\SecureMessage;
+
+use Exonet\SecureMessage\Exceptions\InvalidFileException;
 
 class SecureMessage
 {
     /**
-     * @var string The message ID.
+     * @var string|null The message ID.
      */
-    private $id;
+    private ?string $id = null;
 
     /**
-     * @var string[] Array holding the different keys used for this secure message.
+     * @var array<string, string|null> Array holding the different keys used for this secure message.
+     *
+     * Note: these keys are wiped with sodium_memzero(), which nulls its by-reference argument. The
+     * array values must therefore always allow null.
      */
-    private $keys = ['database' => null, 'storage' => null, 'verification' => null, 'meta' => null];
+    private array $keys = ['database' => null, 'storage' => null, 'verification' => null, 'meta' => null];
 
     /**
-     * @var string The message content. Can be plain text or encrypted.
+     * @var string|null The message content. Can be plain text or encrypted. Nullable because it is
+     *                  wiped with sodium_memzero(), which nulls its by-reference argument.
      */
-    private $content;
+    private ?string $content = null;
 
     /**
-     * @var string The encrypted version of the content.
+     * @var string|null The encrypted version of the content. Nullable because it is wiped with
+     *                  sodium_memzero(), which nulls its by-reference argument.
      */
-    private $contentEncrypted;
+    private ?string $contentEncrypted = null;
 
     /**
-     * @var int[] The meta data for this secure message.
+     * @var array<string, int|string|null> The meta data for this secure message. Holds the hit points and expire
+     *                                     timestamp, and for file messages also the file name, mime type and file
+     *                                     size.
      */
-    private $meta = ['hit_points' => null, 'expires_at' => null];
+    private array $meta = ['hit_points' => null, 'expires_at' => null];
 
     /**
-     * @var string[] The encrypted version of the meta.
+     * @var string|null The encrypted version of the meta. Nullable because it is wiped with
+     *                  sodium_memzero(), which nulls its by-reference argument.
      */
-    private $metaEncrypted;
+    private ?string $metaEncrypted = null;
 
     /**
      * Wipe the sensitive keys from memory.
@@ -99,9 +111,11 @@ class SecureMessage
     }
 
     /**
-     * Get the meta key.
+     * Get the composed meta encryption key: database key (11) + storage key (11) + the configured
+     * 10 character meta key = the 32 bytes sodium requires. The configured key alone is never
+     * enough to decrypt the meta data.
      *
-     * @return string|null The meta key.
+     * @return string|null The composed 32 byte meta key.
      */
     public function getMetaKey(): ?string
     {
@@ -161,7 +175,7 @@ class SecureMessage
     }
 
     /**
-     * Set the boolean indicating the content is encrypted.
+     * Set the encrypted content.
      *
      * @param string $encrypted The encrypted content.
      *
@@ -195,7 +209,7 @@ class SecureMessage
     }
 
     /**
-     * Set the boolean indicating the meta is encrypted.
+     * Set the encrypted meta data.
      *
      * @param string $encrypted The encrypted meta data.
      *
@@ -229,8 +243,7 @@ class SecureMessage
     }
 
     /**
-     * Set the content. Can be encrypted or unencrypted. Don't forget to also set the 'encrypted' boolean when updating
-     * this value.
+     * Set the content. Can be encrypted or unencrypted.
      *
      * @param string $content The content.
      *
@@ -374,16 +387,133 @@ class SecureMessage
     }
 
     /**
-     * Set all meta data for this message.
+     * Set all meta data for this message. The hit points and expire timestamp are cast to integers
+     * to keep the (strictly typed) meta getters working for callers that provide numeric strings.
      *
-     * @param int[] The meta data.
+     * @param mixed[] $metaData The meta data.
      *
      * @return $this The current secure message instance.
      */
     public function setMeta(array $metaData): self
     {
+        if (isset($metaData['hit_points'])) {
+            $metaData['hit_points'] = (int) $metaData['hit_points'];
+        }
+
+        if (isset($metaData['expires_at'])) {
+            $metaData['expires_at'] = (int) $metaData['expires_at'];
+        }
+
+        if (isset($metaData['file_size'])) {
+            $metaData['file_size'] = (int) $metaData['file_size'];
+        }
+
         $this->meta = $metaData;
 
         return $this;
+    }
+
+    /**
+     * Check if this secure message is a file.
+     *
+     * @return bool True when this secure message holds a file.
+     */
+    public function isFile(): bool
+    {
+        return isset($this->meta['file_name']);
+    }
+
+    /**
+     * Set the file name of this message. Setting a file name marks the message as a file.
+     *
+     * @param string $fileName The file name.
+     *
+     * @throws InvalidFileException If the file name is not valid UTF-8 (required because the meta
+     *                              data is JSON encoded before it is encrypted).
+     *
+     * @return $this The current secure message instance.
+     */
+    public function setFileName(string $fileName): self
+    {
+        // UTF-8 validation via PCRE instead of mb_check_encoding: mbstring is not a package dependency.
+        if (preg_match('//u', $fileName) !== 1) {
+            throw new InvalidFileException('The file name must be valid UTF-8.');
+        }
+
+        $this->meta['file_name'] = $fileName;
+
+        return $this;
+    }
+
+    /**
+     * Get the file name of this message.
+     *
+     * @return string|null The file name, or null when this message is not a file.
+     */
+    public function getFileName(): ?string
+    {
+        $fileName = $this->meta['file_name'] ?? null;
+
+        return is_string($fileName) ? $fileName : null;
+    }
+
+    /**
+     * Set the mime type of the file.
+     *
+     * @param string $mimeType The mime type.
+     *
+     * @throws InvalidFileException If the mime type is not valid UTF-8 (required because the meta
+     *                              data is JSON encoded before it is encrypted).
+     *
+     * @return $this The current secure message instance.
+     */
+    public function setMimeType(string $mimeType): self
+    {
+        // UTF-8 validation via PCRE instead of mb_check_encoding: mbstring is not a package dependency.
+        if (preg_match('//u', $mimeType) !== 1) {
+            throw new InvalidFileException('The mime type must be valid UTF-8.');
+        }
+
+        $this->meta['mime_type'] = $mimeType;
+
+        return $this;
+    }
+
+    /**
+     * Get the mime type of the file.
+     *
+     * @return string|null The mime type, or null when this message is not a file.
+     */
+    public function getMimeType(): ?string
+    {
+        $mimeType = $this->meta['mime_type'] ?? null;
+
+        return is_string($mimeType) ? $mimeType : null;
+    }
+
+    /**
+     * Set the file size in bytes.
+     *
+     * @param int $fileSize The file size in bytes.
+     *
+     * @return $this The current secure message instance.
+     */
+    public function setFileSize(int $fileSize): self
+    {
+        $this->meta['file_size'] = $fileSize;
+
+        return $this;
+    }
+
+    /**
+     * Get the file size in bytes.
+     *
+     * @return int|null The file size in bytes, or null when this message is not a file.
+     */
+    public function getFileSize(): ?int
+    {
+        $fileSize = $this->meta['file_size'] ?? null;
+
+        return is_int($fileSize) ? $fileSize : null;
     }
 }

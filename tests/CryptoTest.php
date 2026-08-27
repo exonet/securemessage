@@ -1,6 +1,8 @@
 <?php
 
-namespace Exonet\SecureMessage\tests;
+declare(strict_types=1);
+
+namespace Exonet\SecureMessage\Tests;
 
 use Exonet\SecureMessage\Crypto;
 use Exonet\SecureMessage\Exceptions\DecryptException;
@@ -15,7 +17,7 @@ use PHPUnit\Framework\TestCase;
  */
 class CryptoTest extends TestCase
 {
-    public function testEncrypt()
+    public function testEncrypt(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -53,7 +55,7 @@ class CryptoTest extends TestCase
         $this->assertSame(4823435472, $metaArray['expires_at']);
     }
 
-    public function testEncryptInvalidKeyLength()
+    public function testEncryptInvalidKeyLength(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -62,7 +64,7 @@ class CryptoTest extends TestCase
         $secureMessage->setVerificationCode('b');
         $secureMessage->setDatabaseKey('c');
         $secureMessage->setContent('Unit Test');
-        $secureMessage->setHitPoints('1337');
+        $secureMessage->setHitPoints(1337);
         $secureMessage->setExpiresAt(10);
 
         $this->expectException(InvalidKeyLengthException::class);
@@ -70,7 +72,7 @@ class CryptoTest extends TestCase
         $crypto->encrypt($secureMessage);
     }
 
-    public function testEncryptInvalidMetaKeyLength()
+    public function testEncryptInvalidMetaKeyLength(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -79,7 +81,7 @@ class CryptoTest extends TestCase
         $secureMessage->setVerificationCode('1234567890');
         $secureMessage->setDatabaseKey('databaseKey');
         $secureMessage->setContent('Unit Test');
-        $secureMessage->setHitPoints('1337');
+        $secureMessage->setHitPoints(1337);
         $secureMessage->setExpiresAt(10);
 
         $this->expectException(InvalidKeyLengthException::class);
@@ -87,7 +89,7 @@ class CryptoTest extends TestCase
         $crypto->encrypt($secureMessage);
     }
 
-    public function testDecrypt()
+    public function testDecrypt(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -114,7 +116,7 @@ class CryptoTest extends TestCase
         $this->assertNull($decrypted->getDatabaseKey());
     }
 
-    public function testDecryptSecureMessageIsExpired()
+    public function testDecryptSecureMessageIsExpired(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -130,7 +132,7 @@ class CryptoTest extends TestCase
         $crypto->decrypt($secureMessage);
     }
 
-    public function testDecryptHitpointsReached()
+    public function testDecryptHitpointsReached(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -167,7 +169,7 @@ class CryptoTest extends TestCase
         $this->assertTrue($exceptionThrown);
     }
 
-    public function testDecryptInvalidVerificationCode()
+    public function testDecryptInvalidVerificationCode(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -204,7 +206,91 @@ class CryptoTest extends TestCase
         $this->assertTrue($exceptionThrown);
     }
 
-    public function testValidateEncryptionKeyCorrectKey()
+    public function testEncryptDecryptBinaryContent(): void
+    {
+        $crypto = new Crypto();
+        $binary = implode('', array_map('chr', range(0, 255))).random_bytes(1024 * 1024 + 1);
+
+        $secureMessage = new SecureMessage();
+        $secureMessage->setMetaKey('metaKey___');
+        $secureMessage->setStorageKey('storageKey_');
+        $secureMessage->setVerificationCode('1234567890');
+        $secureMessage->setDatabaseKey('databaseKey');
+        $secureMessage->setContent($binary);
+        $secureMessage->setHitPoints(3);
+        $secureMessage->setExpiresAt(time() + 3600);
+
+        $decrypted = $crypto->decrypt($crypto->encrypt($secureMessage));
+
+        $this->assertSame($binary, $decrypted->getContent());
+    }
+
+    public function testEncryptDecryptKeepsFileMeta(): void
+    {
+        $crypto = new Crypto();
+
+        $secureMessage = new SecureMessage();
+        $secureMessage->setMetaKey('metaKey___');
+        $secureMessage->setStorageKey('storageKey_');
+        $secureMessage->setVerificationCode('1234567890');
+        $secureMessage->setDatabaseKey('databaseKey');
+        $secureMessage->setContent("file\x00contents");
+        $secureMessage->setHitPoints(3);
+        $secureMessage->setExpiresAt(time() + 3600);
+        $secureMessage->setFileName('report.pdf');
+        $secureMessage->setMimeType('application/pdf');
+        $secureMessage->setFileSize(13);
+
+        $decrypted = $crypto->decrypt($crypto->encrypt($secureMessage));
+
+        $this->assertSame("file\x00contents", $decrypted->getContent());
+        $this->assertTrue($decrypted->isFile());
+        $this->assertSame('report.pdf', $decrypted->getFileName());
+        $this->assertSame('application/pdf', $decrypted->getMimeType());
+        $this->assertSame(13, $decrypted->getFileSize());
+    }
+
+    public function testFileMetaSurvivesFailedDecrypt(): void
+    {
+        $crypto = new Crypto();
+
+        $secureMessage = new SecureMessage();
+        $secureMessage->setMetaKey('metaKey___');
+        $secureMessage->setStorageKey('storageKey_');
+        $secureMessage->setVerificationCode('1234567890');
+        $secureMessage->setDatabaseKey('databaseKey');
+        $secureMessage->setContent('file contents');
+        $secureMessage->setHitPoints(3);
+        $secureMessage->setExpiresAt(time() + 3600);
+        $secureMessage->setFileName('report.pdf');
+
+        $encrypted = $crypto->encrypt($secureMessage);
+        $encrypted->setVerificationCode('WrongKey__');
+
+        $exceptionThrown = false;
+
+        try {
+            $crypto->decrypt($encrypted);
+        } catch (DecryptException $exception) {
+            $exceptionThrown = true;
+
+            // Re-add the keys to decrypt the updated meta from the exception.
+            $exception->secureMessage->setStorageKey('storageKey_');
+            $exception->secureMessage->setDatabaseKey('databaseKey');
+            $exception->secureMessage->setMetaKey('metaKey___');
+
+            $decryptedMeta = $crypto->decryptMeta($exception->secureMessage);
+
+            // The hit points are reduced, but the file meta is untouched.
+            $this->assertSame(2, $decryptedMeta->getHitPoints());
+            $this->assertTrue($decryptedMeta->isFile());
+            $this->assertSame('report.pdf', $decryptedMeta->getFileName());
+        }
+
+        $this->assertTrue($exceptionThrown);
+    }
+
+    public function testValidateEncryptionKeyCorrectKey(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -219,7 +305,7 @@ class CryptoTest extends TestCase
         $this->assertTrue($crypto->validateEncryptionKey($secureMessage));
     }
 
-    public function testValidateEncryptionKeyIncorrectKey()
+    public function testValidateEncryptionKeyIncorrectKey(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -235,7 +321,7 @@ class CryptoTest extends TestCase
         $this->assertFalse($crypto->validateEncryptionKey($secureMessage));
     }
 
-    public function testValidateEncryptionKeyKeyTooShort()
+    public function testValidateEncryptionKeyKeyTooShort(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -251,7 +337,7 @@ class CryptoTest extends TestCase
         $this->assertFalse($crypto->validateEncryptionKey($secureMessage));
     }
 
-    public function testDecryptMeta()
+    public function testDecryptMeta(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();
@@ -273,7 +359,7 @@ class CryptoTest extends TestCase
         $this->assertNotNull($decrypted->getEncryptedContent());
     }
 
-    public function testDecryptMetaInvalidMetaKey()
+    public function testDecryptMetaInvalidMetaKey(): void
     {
         $crypto = new Crypto();
         $secureMessage = new SecureMessage();

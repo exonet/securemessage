@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Exonet\SecureMessage\Laravel\Providers;
 
 use Exonet\SecureMessage\Laravel\Console\Housekeeping;
@@ -11,7 +13,7 @@ class SecureMessageServiceProvider extends ServiceProvider
     /**
      * {@inheritdoc}
      */
-    public function boot()
+    public function boot(): void
     {
         $this->publishes([
             __DIR__.'/../config/secure_messages.php' => config_path('secure_messages.php'),
@@ -31,8 +33,6 @@ class SecureMessageServiceProvider extends ServiceProvider
         $this->commands([Housekeeping::class]);
 
         // Create a container binding (used by the facade).
-        $this->app->bind('secureMessage', function () {
-            return $this->app->make(LaravelSecureMessageFactory::class);
-        });
+        $this->app->bind('secureMessage', fn () => $this->app->make(LaravelSecureMessageFactory::class));
     }
 }

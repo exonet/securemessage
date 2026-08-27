@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSecureMessagesTable extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -28,4 +29,4 @@ class CreateSecureMessagesTable extends Migration
     {
         Schema::dropIfExists('secure_messages');
     }
-}
+};

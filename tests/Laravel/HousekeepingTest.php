@@ -1,28 +1,25 @@
 <?php
 
-namespace Exonet\SecureMessage\Laravel\tests;
+declare(strict_types=1);
+
+namespace Exonet\SecureMessage\Tests\Laravel;
 
 use Exonet\SecureMessage\Laravel\Console\Housekeeping;
 use Exonet\SecureMessage\Laravel\Database\SecureMessage as SecureMessageModel;
 use Exonet\SecureMessage\Laravel\Factory as SecureMessageFactory;
+use Exonet\SecureMessage\Laravel\Providers\SecureMessageServiceProvider;
 use Exonet\SecureMessage\SecureMessage;
-use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Foundation\Testing\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Orchestra\Testbench\TestCase;
 
 /**
  * @internal
  */
 class HousekeepingTest extends TestCase
 {
-    public function createApplication()
-    {
-        $app = require __DIR__.'/../../../../bootstrap/app.php';
-        $app->make(Kernel::class)->bootstrap();
+    use MockeryPHPUnitIntegration;
 
-        return $app;
-    }
-
-    public function testHandle()
+    public function testHandle(): void
     {
         $modelMock = \Mockery::mock(SecureMessageModel::class);
         $factoryMock = \Mockery::mock(SecureMessageFactory::class);
@@ -48,5 +45,10 @@ class HousekeepingTest extends TestCase
         $command->shouldReceive('info')->withArgs(['Destroyed secure message [<comment>xyz</comment>]'])->once();
 
         $command->handle($factoryMock, $modelMock);
+    }
+
+    protected function getPackageProviders($app): array
+    {
+        return [SecureMessageServiceProvider::class];
     }
 }
