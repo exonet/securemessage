@@ -187,6 +187,13 @@ class FactoryTest extends TestCase
         $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
 
         $eventMock->shouldReceive('dispatch')->withArgs([\Mockery::on(function ($event) {
+            // The event must not expose any key material to listeners, even though this failure path
+            // throws without a secure message (so the DecryptException constructor never wiped it).
+            $this->assertNull($event->secureMessage->getDatabaseKey());
+            $this->assertNull($event->secureMessage->getStorageKey());
+            $this->assertNull($event->secureMessage->getMetaKey());
+            $this->assertNull($event->secureMessage->getVerificationCode());
+
             return $event::class === DecryptionFailed::class;
         })])->once();
 
@@ -489,6 +496,13 @@ class FactoryTest extends TestCase
         $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
 
         $eventMock->shouldReceive('dispatch')->withArgs([\Mockery::on(function ($event) {
+            // The event must not expose any key material to listeners, even though this failure path
+            // throws without a secure message (so the DecryptException constructor never wiped it).
+            $this->assertNull($event->secureMessage->getDatabaseKey());
+            $this->assertNull($event->secureMessage->getStorageKey());
+            $this->assertNull($event->secureMessage->getMetaKey());
+            $this->assertNull($event->secureMessage->getVerificationCode());
+
             return $event::class === DecryptionFailed::class;
         })])->once();
 

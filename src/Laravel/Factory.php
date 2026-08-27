@@ -259,6 +259,13 @@ class Factory
                 $record->save();
             }
 
+            // Wipe the keys before the secure message is handed to event listeners. Most failure paths
+            // already wipe the keys (the DecryptException constructor does so when it is given the secure
+            // message), but the paths that throw without it - a missing key file, a missing file blob or
+            // malformed stored ciphertext - would otherwise expose the decrypted keys on this instance to
+            // listeners (and to anything they serialize the event to, such as a queue).
+            $secureMessage->wipeKeysFromMemory();
+
             // Dispatch events.
             match ($exception::class) {
                 HitPointLimitReachedException::class => $this->event->dispatch(new HitPointLimitReached($secureMessage)),
