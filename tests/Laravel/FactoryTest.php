@@ -379,6 +379,37 @@ class FactoryTest extends TestCase
         $this->assertSame($decryptedSecureMessage, $factory->getMeta('unitTest'));
     }
 
+    public function testGetMetaStorageKeyNotFound(): void
+    {
+        $this->insertSecureMessageRecord();
+
+        $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
+        $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
+        $encrypterMock = \Mockery::mock(Encrypter::class);
+        $configMock = \Mockery::mock(Config::class);
+        $eventMock = \Mockery::mock(Event::class);
+
+        $configMock->shouldReceive('get')->withArgs(['secure_messages.meta_key'])->once()->andReturn('metaKey');
+        $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
+
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedDatabaseKey'])->once()->andReturn('databaseKey');
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
+
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnFalse();
+        $storageDiskMock->shouldReceive('get')->never();
+
+        $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
+        $secureMessageFactoryMock->shouldReceive('decryptMeta')->never();
+
+        $this->expectException(MissingContentException::class);
+        $this->expectExceptionMessage('Can not find key file.');
+
+        $factory = new Factory($secureMessageFactoryMock, $storageMock, $encrypterMock, $configMock, $eventMock);
+        $factory->getMeta('unitTest');
+    }
+
     public function testDestroy(): void
     {
         $this->insertSecureMessageRecord();

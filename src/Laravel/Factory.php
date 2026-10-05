@@ -285,6 +285,7 @@ class Factory
      * @param string $secureMessageId  The secure message ID.
      * @param string $verificationCode The verification code for the secure message.
      *
+     * @throws DecryptException        If the encrypted content is malformed.
      * @throws MissingContentException If the storage key file or the file blob can not be found.
      *
      * @return bool Whether or not the verification code is valid.
