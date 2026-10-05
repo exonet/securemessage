@@ -53,6 +53,11 @@ following command to clean up the database and file storage:
 php artisan secure_message:housekeeping
 ```
 
+A secure message whose meta data can not be read (for example because its storage key file is missing) is skipped with
+a warning, and the command then exits with a failure code. Add `--destroy-missing` to also destroy the secure messages
+whose storage key file is missing. This is opt-in, because a misconfigured storage disk makes every key file look
+missing.
+
 ## Files as secure messages
 
 ### Setup

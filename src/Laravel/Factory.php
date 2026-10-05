@@ -18,6 +18,7 @@ use Exonet\SecureMessage\Laravel\Events\HitPointLimitReached;
 use Exonet\SecureMessage\Laravel\Events\SecureMessageExpired;
 use Exonet\SecureMessage\SecureMessage;
 use Illuminate\Contracts\Config\Repository as Config;
+use Illuminate\Contracts\Encryption\DecryptException as LaravelDecryptException;
 use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Contracts\Events\Dispatcher as Event;
 use Illuminate\Contracts\Filesystem\Factory as Storage;
@@ -321,6 +322,7 @@ class Factory
      *
      * @throws DecryptException        If the meta data can not be decrypted.
      * @throws MissingContentException If the storage key file can not be found.
+     * @throws LaravelDecryptException If a stored value can not be decrypted with the application key.
      *
      * @return SecureMessage The secure message with only the (decrypted) meta.
      */
