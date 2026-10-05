@@ -38,11 +38,12 @@ $decryptedMessage = SecureMessage::decryptMessage('SECUREMESSAGEID','verificatio
 - If the wrong verification code is entered a `DecryptException` is thrown and a `DecryptionFailed` event is fired.
 - If the number of hit points is reached a `HitPointLimitReachedException` is thrown and a `HitPointLimitReached` event is fired.
 - If the secure message is expired an `ExpiredException` is thrown and a `SecureMessageExpired` event is fired.
+- If the storage key file or the file blob can not be found a `MissingContentException` is thrown and a `DecryptionFailed` event is fired. The verification code was not checked, so no hit point is used.
 
-In all of these three cases the hit points number is decreased by 1 and the secure message meta is updated in the database. If
+In the first three cases the hit points number is decreased by 1 and the secure message meta is updated in the database. If
 the number of hit points reaches 0, the hit point limit is reached and the message can no longer be decrypted.
 
-> Both the HitPointLimitReachedException and ExpiredException are extending the DecryptException.
+> The HitPointLimitReachedException, ExpiredException and MissingContentException all extend the DecryptException.
 
 ### Keeping your app clean
 To remove all expired secure messages and/or secure messages where the hit point limit is reached, you can execute the

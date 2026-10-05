@@ -9,6 +9,7 @@ use Exonet\SecureMessage\Exceptions\DecryptException;
 use Exonet\SecureMessage\Exceptions\ExpiredException;
 use Exonet\SecureMessage\Exceptions\HitPointLimitReachedException;
 use Exonet\SecureMessage\Exceptions\InvalidFileException;
+use Exonet\SecureMessage\Exceptions\MissingContentException;
 use Exonet\SecureMessage\Factory as SecureMessageFactory;
 use Exonet\SecureMessage\Laravel\Database\SecureMessage as SecureMessageModel;
 use Exonet\SecureMessage\Laravel\Events\DecryptionFailed;
@@ -162,6 +163,70 @@ class FactoryTest extends TestCase
         $this->assertTrue($factory->checkVerificationCode('unitTest', '1337'));
     }
 
+    public function testCheckVerificationCodeFileBlobMissing(): void
+    {
+        $this->insertSecureMessageRecord(null);
+
+        $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
+        $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
+        $filesDiskMock = \Mockery::mock(Filesystem::class);
+        $encrypterMock = \Mockery::mock(Encrypter::class);
+        $configMock = \Mockery::mock(Config::class);
+        $eventMock = \Mockery::mock(Event::class);
+
+        $configMock->shouldReceive('get')->withArgs(['secure_messages.meta_key'])->once()->andReturn('metaKey');
+        $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
+        $configMock->shouldReceive('get')->withArgs(['secure_messages.files_disk_name'])->once()->andReturn('secure_messages_files');
+
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedDatabaseKey'])->once()->andReturn('databaseKey');
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
+
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages_files'])->once()->andReturn($filesDiskMock);
+        $filesDiskMock->shouldReceive('exists')->withArgs(['files/unitTest'])->once()->andReturnFalse();
+
+        $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
+        $secureMessageFactoryMock->shouldReceive('validateEncryptionKey')->never();
+
+        $this->expectException(MissingContentException::class);
+        $this->expectExceptionMessage('Can not find file blob.');
+
+        $factory = new Factory($secureMessageFactoryMock, $storageMock, $encrypterMock, $configMock, $eventMock);
+        $factory->checkVerificationCode('unitTest', '1337');
+    }
+
+    public function testCheckVerificationCodeStorageKeyNotFound(): void
+    {
+        $this->insertSecureMessageRecord();
+
+        $secureMessageFactoryMock = \Mockery::mock(SecureMessageFactory::class);
+        $storageMock = \Mockery::mock(Storage::class);
+        $storageDiskMock = \Mockery::mock(Filesystem::class);
+        $encrypterMock = \Mockery::mock(Encrypter::class);
+        $configMock = \Mockery::mock(Config::class);
+        $eventMock = \Mockery::mock(Event::class);
+
+        $configMock->shouldReceive('get')->withArgs(['secure_messages.meta_key'])->once()->andReturn('metaKey');
+        $configMock->shouldReceive('get')->withArgs(['secure_messages.storage_disk_name'])->once()->andReturn('secure_messages');
+
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedDatabaseKey'])->once()->andReturn('databaseKey');
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedMeta'])->once()->andReturn('meta');
+        $encrypterMock->shouldReceive('decrypt')->withArgs(['encryptedContent'])->once()->andReturn('content');
+
+        $storageMock->shouldReceive('disk')->withArgs(['secure_messages'])->once()->andReturn($storageDiskMock);
+        $storageDiskMock->shouldReceive('exists')->withArgs(['unitTest'])->once()->andReturnFalse();
+
+        $secureMessageFactoryMock->shouldReceive('setMetaKey')->withArgs(['metaKey'])->once()->andReturnSelf();
+        $secureMessageFactoryMock->shouldReceive('validateEncryptionKey')->never();
+
+        $this->expectException(MissingContentException::class);
+        $this->expectExceptionMessage('Can not find key file.');
+
+        $factory = new Factory($secureMessageFactoryMock, $storageMock, $encrypterMock, $configMock, $eventMock);
+        $factory->checkVerificationCode('unitTest', '1337');
+    }
+
     public function testDecryptMessageStorageKeyNotFound(): void
     {
         $this->insertSecureMessageRecord();
@@ -197,7 +262,7 @@ class FactoryTest extends TestCase
             return $event::class === DecryptionFailed::class;
         })])->once();
 
-        $this->expectException(DecryptException::class);
+        $this->expectException(MissingContentException::class);
         $this->expectExceptionMessage('Can not find key file.');
 
         $factory = new Factory($secureMessageFactoryMock, $storageMock, $encrypterMock, $configMock, $eventMock);
@@ -506,7 +571,7 @@ class FactoryTest extends TestCase
             return $event::class === DecryptionFailed::class;
         })])->once();
 
-        $this->expectException(DecryptException::class);
+        $this->expectException(MissingContentException::class);
         $this->expectExceptionMessage('Can not find file blob.');
 
         $factory = new Factory($secureMessageFactoryMock, $storageMock, $encrypterMock, $configMock, $eventMock);

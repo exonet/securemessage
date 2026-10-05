@@ -24,8 +24,8 @@ keys (10 + 11 + 11 = 32 bytes).
 - `src/Factory.php` — creates messages, generates the three key parts.
 - `src/SecureMessage.php` — value object holding content, keys and meta; has
   `wipe*FromMemory()` methods built on `sodium_memzero()`.
-- `src/Exceptions/` — all extend `SecureMessageException`; `ExpiredException`
-  and `HitPointLimitReachedException` extend `DecryptException`.
+- `src/Exceptions/` — all extend `SecureMessageException`; `ExpiredException`,
+  `HitPointLimitReachedException` and `MissingContentException` extend `DecryptException`.
 - `src/Laravel/` — service provider, facade, Eloquent model + migration,
   config, events and the `secure_message:housekeeping` command. Persists the
   storage key via a Laravel filesystem disk and the rest in the database, each

@@ -10,6 +10,7 @@ use Exonet\SecureMessage\Exceptions\ExpiredException;
 use Exonet\SecureMessage\Exceptions\HitPointLimitReachedException;
 use Exonet\SecureMessage\Exceptions\InvalidFileException;
 use Exonet\SecureMessage\Exceptions\InvalidKeyLengthException;
+use Exonet\SecureMessage\Exceptions\MissingContentException;
 use Exonet\SecureMessage\Factory as SecureMessageFactory;
 use Exonet\SecureMessage\Laravel\Database\SecureMessage as SecureMessageModel;
 use Exonet\SecureMessage\Laravel\Events\DecryptionFailed;
@@ -204,6 +205,7 @@ class Factory
      * @param string $verificationCode The verification code for the secure message.
      *
      * @throws DecryptException If the secure message can not be decrypted.
+     * @throws MissingContentException If the storage key file or the file blob can not be found.
      *
      * @return string|null The contents of the secure message.
      */
@@ -222,6 +224,7 @@ class Factory
      * @param string $verificationCode The verification code for the secure message.
      *
      * @throws DecryptException If the secure message can not be decrypted.
+     * @throws MissingContentException If the storage key file or the file blob can not be found.
      *
      * @return SecureMessage The decrypted secure message, with the keys removed.
      */
@@ -244,7 +247,7 @@ class Factory
 
             // Check if the storage key file exists.
             if (!$this->storage->exists($record->id)) {
-                throw new DecryptException('Can not find key file.');
+                throw new MissingContentException('Can not find key file.');
             }
 
             // Read and set the storage key.
@@ -282,7 +285,7 @@ class Factory
      * @param string $secureMessageId  The secure message ID.
      * @param string $verificationCode The verification code for the secure message.
      *
-     * @throws DecryptException If the storage key file can not be found.
+     * @throws MissingContentException If the storage key file or the file blob can not be found.
      *
      * @return bool Whether or not the verification code is valid.
      */
@@ -301,7 +304,7 @@ class Factory
 
         // Check if the storage key file exists.
         if (!$this->storage->exists($record->id)) {
-            throw new DecryptException('Can not find key file.');
+            throw new MissingContentException('Can not find key file.');
         }
 
         // Read and set the storage key.
@@ -316,6 +319,7 @@ class Factory
      * @param string $secureMessageId The secure message ID.
      *
      * @throws DecryptException If the meta data can not be decrypted.
+     * @throws MissingContentException If the storage key file can not be found.
      *
      * @return SecureMessage The secure message with only the (decrypted) meta.
      */
@@ -332,7 +336,7 @@ class Factory
 
         // Check if the storage key file exists.
         if (!$this->storage->exists($record->id)) {
-            throw new DecryptException('Can not find key file.');
+            throw new MissingContentException('Can not find key file.');
         }
 
         // Read and set the storage key.
@@ -374,7 +378,7 @@ class Factory
      * @param SecureMessage      $secureMessage The secure message to set the encrypted content on.
      * @param SecureMessageModel $record        The database record.
      *
-     * @throws DecryptException If the file blob can not be found.
+     * @throws MissingContentException If the file blob can not be found.
      */
     private function loadEncryptedContent(SecureMessage $secureMessage, SecureMessageModel $record): void
     {
@@ -386,7 +390,7 @@ class Factory
 
         // File message: the encrypted contents are stored on the files disk.
         if (!$this->filesDisk()->exists(self::FILES_PATH_PREFIX.$record->id)) {
-            throw new DecryptException('Can not find file blob.');
+            throw new MissingContentException('Can not find file blob.');
         }
 
         $secureMessage->setEncryptedContent(
