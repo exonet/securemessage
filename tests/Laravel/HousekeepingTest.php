@@ -11,6 +11,7 @@ use Exonet\SecureMessage\Laravel\Database\SecureMessage as SecureMessageModel;
 use Exonet\SecureMessage\Laravel\Factory as SecureMessageFactory;
 use Exonet\SecureMessage\Laravel\Providers\SecureMessageServiceProvider;
 use Exonet\SecureMessage\SecureMessage;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Orchestra\Testbench\TestCase;
 
@@ -73,6 +74,29 @@ class HousekeepingTest extends TestCase
         $command->shouldReceive('warn')->withArgs(['Skipped secure message [def]: Unable to or failed to decrypt the meta data.'])->once();
 
         $this->assertSame(Housekeeping::FAILURE, $command->handle($factoryMock, $modelMock));
+    }
+
+    public function testHandleIgnoresMessagesDestroyedDuringTheRun(): void
+    {
+        $modelMock = \Mockery::mock(SecureMessageModel::class);
+        $factoryMock = \Mockery::mock(SecureMessageFactory::class);
+
+        $expiredSecureMessage = (new SecureMessage())->setId('def')->setExpiresAt(time() - 10)->setHitPoints(3);
+
+        $modelMock->shouldReceive('pluck')->withArgs(['id'])->once()->andReturn(collect(['abc', 'def']));
+
+        $factoryMock->shouldReceive('getMeta')->withArgs(['abc'])->once()->andThrow(new ModelNotFoundException());
+        $factoryMock->shouldReceive('getMeta')->withArgs(['def'])->once()->andReturn($expiredSecureMessage);
+
+        $factoryMock->shouldReceive('destroy')->withArgs(['abc'])->never();
+        $factoryMock->shouldReceive('destroy')->withArgs(['def'])->once();
+
+        $command = \Mockery::mock(Housekeeping::class.'[getOutput,info,warn,option]')->makePartial();
+        $command->shouldReceive('option')->never();
+        $command->shouldReceive('getOutput->isVerbose')->once()->andReturnFalse();
+        $command->shouldReceive('warn')->never();
+
+        $this->assertSame(Housekeeping::SUCCESS, $command->handle($factoryMock, $modelMock));
     }
 
     public function testHandleDestroysMissingKeyFileWithOption(): void

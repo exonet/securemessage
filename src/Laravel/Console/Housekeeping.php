@@ -10,6 +10,7 @@ use Exonet\SecureMessage\Laravel\Database\SecureMessage as SecureMessageModel;
 use Exonet\SecureMessage\Laravel\Factory as SecureMessageFactory;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Encryption\DecryptException as LaravelDecryptException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Housekeeping extends Command
 {
@@ -44,6 +45,9 @@ class Housekeeping extends Command
             ->each(function (string $secureMessageId) use ($secureMessageFactory, &$skipped) {
                 try {
                     $meta = $secureMessageFactory->getMeta($secureMessageId);
+                } catch (ModelNotFoundException) {
+                    // Destroyed since the IDs were plucked, so there is nothing left to clean up.
+                    return;
                 } catch (DecryptException|LaravelDecryptException $exception) {
                     if ($exception instanceof MissingContentException && $this->option('destroy-missing')) {
                         $this->destroy($secureMessageFactory, $secureMessageId);
