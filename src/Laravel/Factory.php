@@ -204,7 +204,7 @@ class Factory
      * @param string $secureMessageId  The secure message ID.
      * @param string $verificationCode The verification code for the secure message.
      *
-     * @throws DecryptException If the secure message can not be decrypted.
+     * @throws DecryptException        If the secure message can not be decrypted.
      * @throws MissingContentException If the storage key file or the file blob can not be found.
      *
      * @return string|null The contents of the secure message.
@@ -223,7 +223,7 @@ class Factory
      * @param string $secureMessageId  The secure message ID.
      * @param string $verificationCode The verification code for the secure message.
      *
-     * @throws DecryptException If the secure message can not be decrypted.
+     * @throws DecryptException        If the secure message can not be decrypted.
      * @throws MissingContentException If the storage key file or the file blob can not be found.
      *
      * @return SecureMessage The decrypted secure message, with the keys removed.
@@ -318,7 +318,7 @@ class Factory
      *
      * @param string $secureMessageId The secure message ID.
      *
-     * @throws DecryptException If the meta data can not be decrypted.
+     * @throws DecryptException        If the meta data can not be decrypted.
      * @throws MissingContentException If the storage key file can not be found.
      *
      * @return SecureMessage The secure message with only the (decrypted) meta.
